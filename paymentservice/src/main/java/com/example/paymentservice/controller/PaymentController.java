@@ -6,10 +6,7 @@ import com.example.paymentservice.service.PaymentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/payment")
@@ -21,9 +18,9 @@ public class PaymentController {
         this.paymentService = paymentService;
     }
 
-    @PostMapping("/checkout")
-    public ResponseEntity<StripeResponse> checkoutOrder(@RequestBody ProductRequest productRequest) {
-        StripeResponse response = paymentService.checkoutProducts(productRequest);
+    @PostMapping("/checkout/{orderId}")
+    public ResponseEntity<StripeResponse> checkoutOrder(@PathVariable Long orderId) {
+        StripeResponse response = paymentService.checkoutProducts(orderId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }

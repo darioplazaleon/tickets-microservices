@@ -1,35 +1,54 @@
 package com.example.paymentservice.service;
 
+import com.example.paymentservice.client.OrderServiceClient;
+import com.example.paymentservice.event.PaymentEvent;
 import com.example.paymentservice.request.ProductRequest;
+import com.example.paymentservice.response.OrderResponse;
 import com.example.paymentservice.response.StripeResponse;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
+import com.stripe.model.climate.Order;
 import com.stripe.param.checkout.SessionCreateParams;
+import com.stripe.service.climate.OrderService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class PaymentService {
 
     @Value("${stripe.secretKey}")
     private String secretKey;
 
-    public StripeResponse checkoutProducts(ProductRequest productRequest) {
+    private final OrderServiceClient orderServiceClient;
+    private final KafkaTemplate<String, PaymentEvent> kafkaTemplate;
+
+    public StripeResponse checkoutProducts(Long orderId) {
         Stripe.apiKey = secretKey;
 
+        OrderResponse orderResponse = orderServiceClient.getOrder(orderId);
+
+        System.out.println(orderResponse);
+
         SessionCreateParams.LineItem.PriceData.ProductData productData = SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                .setName(productRequest.name())
+                .setName(orderResponse.eventId().toString())
                 .build();
 
         SessionCreateParams.LineItem.PriceData priceData = SessionCreateParams.LineItem.PriceData.builder()
-                .setCurrency(productRequest.currency() == null ? "usd" : productRequest.currency())
-                .setUnitAmount(productRequest.amount())
+                .setCurrency("usd")
+                .setUnitAmount(orderResponse.totalPrice().multiply(BigDecimal.valueOf(100)).longValue())
                 .setProductData(productData)
                 .build();
 
         SessionCreateParams.LineItem lineItem = SessionCreateParams.LineItem.builder()
-                .setQuantity(productRequest.quantity())
+                .setQuantity(1L)
                 .setPriceData(priceData)
                 .build();
 
@@ -38,6 +57,7 @@ public class PaymentService {
                 .setSuccessUrl("http://localhost:8080/success")
                 .setCancelUrl("http://localhost:8080/cancel")
                 .addLineItem(lineItem)
+                .putMetadata("order_id", orderResponse.eventId().toString())
                 .build();
 
         Session session = null;
@@ -55,8 +75,14 @@ public class PaymentService {
         );
     }
 
-    public void createPaymentSuccess() {
+    public void updateOrderStatus(Long orderId) {
+        orderServiceClient.updateOrderStatus(orderId, "COMPLETED");
+        log.info("Order status with id: {} updated to COMPLETED", orderId);
 
-        System.out.println("Payment successful");
+        OrderResponse orderResponse = orderServiceClient.getOrder(orderId);
+        var paymentEvent = new PaymentEvent(orderResponse);
+
+        kafkaTemplate.send("payment-success", paymentEvent);
+        log.info("Payment event sent to kafka topic: {}", paymentEvent);
     }
 }

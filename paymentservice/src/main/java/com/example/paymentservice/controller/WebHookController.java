@@ -1,18 +1,24 @@
 package com.example.paymentservice.controller;
 
+import com.example.paymentservice.service.PaymentService;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.StripeObject;
+import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequiredArgsConstructor
 public class WebHookController {
+
+    private final PaymentService paymentService;
 
     @PostMapping("/webhook")
     public void handleWebHook(@RequestHeader("Stripe-Signature") String signature, @RequestBody String payload) {
@@ -47,7 +53,12 @@ public class WebHookController {
                 break;
 
             case "checkout.session.completed":
-                System.out.println("Checkout session completed");
+                if (object instanceof Session) {
+                    Session checkoutSession = (Session) object;
+                    String orderId = checkoutSession.getMetadata().get("order_id");
+                    System.out.println("Received order id from Stripe webhook: " + orderId);
+                    paymentService.updateOrderStatus(Long.parseLong(orderId));
+                }
                 break;
 
             default:
