@@ -1,0 +1,54 @@
+# IntelliJ IDEA specific files (aplica a todos los subproyectos)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Gradle specific files
+.gradle/
+build/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Maven specific files
+target/
+dependency-reduced-pom.xml
+releases/
+build/
+tmp/
+mvnw
+mvnw.cmd
+.settings/
+.project
+.classpath
+
+# Logs
+logs/
+*.log
+
+# Spring Boot properties (Ignoramos todos los application.properties o .yml de cada microservicio)
+**/src/main/resources/application.properties
+**/src/main/resources/application.yml
+**/src/test/resources/application.properties
+**/src/test/resources/application.yml
+
+# Ignore test results
+test-results/
+surefire-reports/
+
+# Ignore IDE specific files
+.vscode/
+*.swp
+
+# Ignore OS generated files
+.DS_Store
+Thumbs.db
+
+# Ignore coverage reports
+coverage/
+.jacoco/
+
+# Ignore IntelliJ's workspace files
+**/.idea/
+**/*.iml
+
