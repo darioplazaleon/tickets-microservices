@@ -50,6 +50,7 @@ public class OrderService {
                 .eventId(bookingEvent.getEventId())
                 .ticketCount(bookingEvent.getTicketCount())
                 .totalPrice(bookingEvent.getTotalPrice())
+                .status(OrderStatus.PENDING)
                 .build();
     }
 }
