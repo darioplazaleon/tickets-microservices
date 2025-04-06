@@ -1,16 +1,9 @@
 package com.example.eventservice.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.example.eventservice.entity.Venue;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class LocationResponse {
-    private Long venueId;
-    private String venueName;
-    private int totalCapacity;
+public record LocationResponse(Long venueId, String venueName, int totalCapacity) {
+  public LocationResponse(Venue venue) {
+    this(venue.getId(), venue.getName(), venue.getTotalCapacity());
+  }
 }

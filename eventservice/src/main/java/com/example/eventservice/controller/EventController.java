@@ -21,11 +21,6 @@ public class EventController {
     return eventService.getAllEvents();
   }
 
-  @GetMapping("/venue/{venueId}")
-  public @ResponseBody LocationResponse getVenueById(@PathVariable Long venueId) {
-    return eventService.getVenueById(venueId);
-  }
-
   @GetMapping("/event/{eventId}")
   public @ResponseBody EventRecord getEventById(@PathVariable Long eventId) {
     return eventService.getEventById(eventId);

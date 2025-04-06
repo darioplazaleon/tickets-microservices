@@ -35,19 +35,6 @@ public class EventService {
         .collect(Collectors.toList());
   }
 
-  public LocationResponse getVenueById(Long id) {
-    return venueRepository
-        .findById(id)
-        .map(
-            venue ->
-                LocationResponse.builder()
-                    .venueId(venue.getId())
-                    .venueName(venue.getName())
-                    .totalCapacity(venue.getTotalCapacity())
-                    .build())
-        .orElse(null);
-  }
-
   public EventRecord getEventById(Long id) {
     Event event =
         eventRepository.findById(id).orElseThrow(() -> new RuntimeException("Event not found"));
