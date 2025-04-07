@@ -1,16 +1,19 @@
 package com.example.eventservice.service;
 
 import com.example.eventservice.entity.Event;
+import com.example.eventservice.entity.EventStatus;
+import com.example.eventservice.entity.Venue;
 import com.example.eventservice.repository.EventRepository;
 import com.example.eventservice.repository.VenueRepository;
+import com.example.eventservice.request.EventAddRequest;
 import com.example.eventservice.response.EventRecord;
 import com.example.eventservice.response.EventResponse;
-import com.example.eventservice.response.LocationResponse;
-import java.util.List;
-import java.util.stream.Collectors;
+import jakarta.persistence.EntityExistsException;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -21,25 +24,73 @@ public class EventService {
   private final EventRepository eventRepository;
   private final VenueRepository venueRepository;
 
-  public List<EventResponse> getAllEvents() {
-    List<Event> events = eventRepository.findAll();
-
-    return events.stream()
-        .map(
-            event ->
-                EventResponse.builder()
-                    .event(event.getName())
-                    .capacity(event.getLeftCapacity())
-                    .venue(event.getVenue())
-                    .build())
-        .collect(Collectors.toList());
-  }
-
   public EventRecord getEventById(Long id) {
     Event event =
-        eventRepository.findById(id).orElseThrow(() -> new RuntimeException("Event not found"));
+        eventRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Event not found"));
 
     return new EventRecord(event);
+  }
+
+  public Page<EventResponse> getAllEvents(Pageable pageable) {
+    return eventRepository.findAll(pageable).map(EventResponse::new);
+  }
+
+  public EventRecord createEvent(EventAddRequest newEvent) {
+    if (eventRepository.findByName(newEvent.name()).isPresent()) {
+      throw new EntityExistsException("Event already exists");
+    }
+
+    if (venueRepository.findById(newEvent.venueId()).isEmpty()) {
+      throw new EntityNotFoundException("Venue not found");
+    }
+
+    Venue venue = venueRepository.findById(newEvent.venueId()).get();
+
+    var eventDb =
+        Event.builder()
+            .name(newEvent.name())
+            .venue(venue)
+            .startDate(newEvent.startDate())
+            .endDate(newEvent.endDate())
+            .ticketPrice(newEvent.ticketPrice())
+            .leftCapacity(venue.getTotalCapacity())
+            .status(EventStatus.UPCOMING)
+            .build();
+
+    var savedEvent = eventRepository.save(eventDb);
+
+    return new EventRecord(savedEvent);
+  }
+
+  public EventResponse updateEvent(Long id, EventAddRequest newEvent) {
+    Event event =
+        eventRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Event not found"));
+
+    if (!event.getName().equals(newEvent.name()) && eventRepository.findByName(newEvent.name()).isPresent()) {
+      throw new EntityExistsException("Event with the new name already exists");
+    }
+
+    event.setName(newEvent.name());
+    event.setStartDate(newEvent.startDate());
+    event.setEndDate(newEvent.endDate());
+    event.setTicketPrice(newEvent.ticketPrice());
+
+    Event updatedEvent = eventRepository.save(event);
+    return new EventResponse(updatedEvent);
+  }
+
+  public void deleteEvent(Long id) {
+    Event event =
+        eventRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Event not found"));
+
+    eventRepository.delete(event);
+    log.info("Deleted event with id: {}", id);
   }
 
   public void updateEventCapacity(Long id, Long capacity) {
