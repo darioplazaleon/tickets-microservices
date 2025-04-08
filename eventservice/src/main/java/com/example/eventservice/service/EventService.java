@@ -1,8 +1,10 @@
 package com.example.eventservice.service;
 
+import com.example.eventservice.entity.Category;
 import com.example.eventservice.entity.Event;
 import com.example.eventservice.entity.EventStatus;
 import com.example.eventservice.entity.Venue;
+import com.example.eventservice.repository.CategoryRepository;
 import com.example.eventservice.repository.EventRepository;
 import com.example.eventservice.repository.VenueRepository;
 import com.example.eventservice.request.EventAddRequest;
@@ -23,6 +25,7 @@ public class EventService {
 
   private final EventRepository eventRepository;
   private final VenueRepository venueRepository;
+  private final CategoryRepository categoryRepository;
 
   public EventRecord getEventById(Long id) {
     Event event =
@@ -46,6 +49,11 @@ public class EventService {
       throw new EntityNotFoundException("Venue not found");
     }
 
+    Category category =
+        categoryRepository
+            .findById(newEvent.categoryId())
+            .orElseThrow(() -> new EntityNotFoundException("Category not found"));
+
     Venue venue = venueRepository.findById(newEvent.venueId()).get();
 
     var eventDb =
@@ -57,6 +65,7 @@ public class EventService {
             .ticketPrice(newEvent.ticketPrice())
             .leftCapacity(venue.getTotalCapacity())
             .status(EventStatus.UPCOMING)
+            .category(category)
             .build();
 
     var savedEvent = eventRepository.save(eventDb);
@@ -70,14 +79,21 @@ public class EventService {
             .findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Event not found"));
 
-    if (!event.getName().equals(newEvent.name()) && eventRepository.findByName(newEvent.name()).isPresent()) {
+    if (!event.getName().equals(newEvent.name())
+        && eventRepository.findByName(newEvent.name()).isPresent()) {
       throw new EntityExistsException("Event with the new name already exists");
     }
+
+    Category category =
+            categoryRepository
+                    .findById(newEvent.categoryId())
+                    .orElseThrow(() -> new EntityNotFoundException("Category not found"));
 
     event.setName(newEvent.name());
     event.setStartDate(newEvent.startDate());
     event.setEndDate(newEvent.endDate());
     event.setTicketPrice(newEvent.ticketPrice());
+    event.setCategory(category);
 
     Event updatedEvent = eventRepository.save(event);
     return new EventResponse(updatedEvent);

@@ -3,8 +3,6 @@ package com.example.eventservice.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
-
 @Entity
 @Table(name = "venues")
 @Getter
@@ -14,22 +12,22 @@ import java.util.List;
 @Builder
 public class Venue {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String name;
+  @Column(nullable = false, unique = true)
+  private String name;
 
-    @Column(nullable = false)
-    private int totalCapacity;
+  @Column(nullable = false)
+  private int totalCapacity;
 
-    @Column(nullable = false)
-    private String address;
+  @Column(nullable = false)
+  private String address;
 
-    @Column(nullable = false)
-    private String city;
+  @Column(nullable = false)
+  private String city;
 
-//    @OneToMany(mappedBy = "venue", cascade = CascadeType.ALL)
-//    private List<Event> events;
+  //    @OneToMany(mappedBy = "venue", cascade = CascadeType.ALL)
+  //    private List<Event> events;
 }
