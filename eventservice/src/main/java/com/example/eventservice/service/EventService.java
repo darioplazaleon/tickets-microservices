@@ -1,9 +1,6 @@
 package com.example.eventservice.service;
 
-import com.example.eventservice.entity.Category;
-import com.example.eventservice.entity.Event;
-import com.example.eventservice.entity.EventStatus;
-import com.example.eventservice.entity.Venue;
+import com.example.eventservice.entity.*;
 import com.example.eventservice.repository.CategoryRepository;
 import com.example.eventservice.repository.EventRepository;
 import com.example.eventservice.repository.VenueRepository;
@@ -12,6 +9,7 @@ import com.example.eventservice.response.EventRecord;
 import com.example.eventservice.response.EventResponse;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -26,6 +24,7 @@ public class EventService {
   private final EventRepository eventRepository;
   private final VenueRepository venueRepository;
   private final CategoryRepository categoryRepository;
+  private final TagService tagService;
 
   public EventRecord getEventById(Long id) {
     Event event =
@@ -49,6 +48,9 @@ public class EventService {
       throw new EntityNotFoundException("Venue not found");
     }
 
+    List<Tag> tags =
+        newEvent.tagsNames().stream().map(tagService::createIfNotExists).distinct().toList();
+
     Category category =
         categoryRepository
             .findById(newEvent.categoryId())
@@ -66,6 +68,7 @@ public class EventService {
             .leftCapacity(venue.getTotalCapacity())
             .status(EventStatus.UPCOMING)
             .category(category)
+            .tags(tags)
             .build();
 
     var savedEvent = eventRepository.save(eventDb);
@@ -85,9 +88,9 @@ public class EventService {
     }
 
     Category category =
-            categoryRepository
-                    .findById(newEvent.categoryId())
-                    .orElseThrow(() -> new EntityNotFoundException("Category not found"));
+        categoryRepository
+            .findById(newEvent.categoryId())
+            .orElseThrow(() -> new EntityNotFoundException("Category not found"));
 
     event.setName(newEvent.name());
     event.setStartDate(newEvent.startDate());

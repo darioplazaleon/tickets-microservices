@@ -28,20 +28,20 @@ public class EventController {
     return eventService.getEventById(eventId);
   }
 
-  @PostMapping("/add")
+  @PostMapping("/create")
   public ResponseEntity<EventRecord> createEvent(@RequestBody EventAddRequest newEvent) {
     EventRecord event = eventService.createEvent(newEvent);
     return ResponseEntity.status(HttpStatus.CREATED).body(event);
   }
 
-  @PutMapping("/{eventId}/update")
+  @PutMapping("/update/{eventId}")
   public ResponseEntity<EventResponse> updateEvent(
       @PathVariable Long eventId, @RequestBody EventAddRequest updatedEvent) {
     EventResponse event = eventService.updateEvent(eventId, updatedEvent);
     return ResponseEntity.ok(event);
   }
 
-  @DeleteMapping("/{eventId}/delete")
+  @DeleteMapping("/delete/{eventId}")
   public ResponseEntity<Void> deleteEvent(@PathVariable Long eventId) {
     eventService.deleteEvent(eventId);
     return ResponseEntity.noContent().build();

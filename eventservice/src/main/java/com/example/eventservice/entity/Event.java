@@ -3,6 +3,8 @@ package com.example.eventservice.entity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.*;
 
 @Entity
@@ -42,4 +44,11 @@ public class Event {
   @ManyToOne
   @JoinColumn(name = "category_id")
   private Category category;
+
+  @ManyToMany
+  @JoinTable(
+      name = "event_tags",
+      joinColumns = @JoinColumn(name = "event_id"),
+      inverseJoinColumns = @JoinColumn(name = "tag_id"))
+  private List<Tag> tags = new ArrayList<>();
 }
