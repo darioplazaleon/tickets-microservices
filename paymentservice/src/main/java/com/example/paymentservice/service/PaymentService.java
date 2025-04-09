@@ -2,15 +2,12 @@ package com.example.paymentservice.service;
 
 import com.example.paymentservice.client.OrderServiceClient;
 import com.example.paymentservice.event.PaymentEvent;
-import com.example.paymentservice.request.ProductRequest;
 import com.example.paymentservice.response.OrderResponse;
 import com.example.paymentservice.response.StripeResponse;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
-import com.stripe.model.climate.Order;
 import com.stripe.param.checkout.SessionCreateParams;
-import com.stripe.service.climate.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -75,7 +72,7 @@ public class PaymentService {
         );
     }
 
-    public void updateOrderStatus(Long orderId) {
+    public void updateSuccessOrderStatus(Long orderId) {
         orderServiceClient.updateOrderStatus(orderId, "COMPLETED");
         log.info("Order status with id: {} updated to COMPLETED", orderId);
 
@@ -84,5 +81,10 @@ public class PaymentService {
 
         kafkaTemplate.send("payment-success", paymentEvent);
         log.info("Payment event sent to kafka topic: {}", paymentEvent);
+    }
+
+    public void updateFailedOrderStatus(Long orderId) {
+        orderServiceClient.updateOrderStatus(orderId, "FAILED");
+        log.info("Order status with id: {} updated to FAILED", orderId);
     }
 }

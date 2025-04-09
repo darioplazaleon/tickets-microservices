@@ -44,21 +44,17 @@ public class WebHookController {
         }
 
         switch (event.getType()) {
-            case "payment_intent.succeeded":
-                System.out.println("Payment succeeded");
-                break;
-
-            case "payment_intent.payment_failed":
-                System.out.println("Payment failed");
-                break;
-
             case "checkout.session.completed":
                 if (object instanceof Session) {
                     Session checkoutSession = (Session) object;
                     String orderId = checkoutSession.getMetadata().get("order_id");
                     System.out.println("Received order id from Stripe webhook: " + orderId);
-                    paymentService.updateOrderStatus(Long.parseLong(orderId));
+                    paymentService.updateSuccessOrderStatus(Long.parseLong(orderId));
                 }
+                break;
+
+            case "payment_intent.payment_failed":
+                System.out.println("Payment failed");
                 break;
 
             default:
