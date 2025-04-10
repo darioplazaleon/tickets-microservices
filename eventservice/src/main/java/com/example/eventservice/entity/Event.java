@@ -2,9 +2,11 @@ package com.example.eventservice.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import lombok.*;
 
 @Entity
@@ -17,8 +19,8 @@ import lombok.*;
 public class Event {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+  @Column(columnDefinition = "uuid")
+  private UUID id;
 
   @Column private String name;
 
@@ -41,9 +43,18 @@ public class Event {
   @Column(name = "ticket_price", nullable = false)
   private BigDecimal ticketPrice;
 
+  @Column(name = "capacity",nullable = false)
+  private int capacity;
+
   @ManyToOne
   @JoinColumn(name = "category_id")
   private Category category;
+
+  @Column(name = "created_at", updatable = false)
+  private Instant createdAt;
+  
+  @Column(name = "updated_at")
+  private Instant updatedAt;
 
   @ManyToMany
   @JoinTable(
@@ -51,4 +62,11 @@ public class Event {
       joinColumns = @JoinColumn(name = "event_id"),
       inverseJoinColumns = @JoinColumn(name = "tag_id"))
   private List<Tag> tags = new ArrayList<>();
+
+  @PrePersist
+  public void prePersist() {
+    if (this.id == null) this.id = UUID.randomUUID();
+    if (this.createdAt == null) this.createdAt = Instant.now();
+    if (capacity == 0 && venue != null) this.capacity = venue.getTotalCapacity();
+  }
 }

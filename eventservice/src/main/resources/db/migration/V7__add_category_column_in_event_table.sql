@@ -1,5 +1,5 @@
 ALTER TABLE events
-    ADD COLUMN category_id BIGINT;
+    ADD COLUMN category_id UUID;
 
 ALTER TABLE events
     ADD CONSTRAINT fk_category

@@ -1,6 +1,8 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE venues
 (
-    id             BIGSERIAL PRIMARY KEY,
+    id UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
     name           VARCHAR(255) NOT NULL,
     address        VARCHAR(255) NOT NULL,
     total_capacity INT          NOT NULL,
@@ -9,12 +11,12 @@ CREATE TABLE venues
 
 CREATE TABLE events
 (
-    id            BIGSERIAL PRIMARY KEY,
+    id UUID       PRIMARY KEY DEFAULT uuid_generate_v4(),
     name          VARCHAR(255) NOT NULL,
     start_date    TIMESTAMP    NOT NULL,
     end_date      TIMESTAMP    NOT NULL,
     left_capacity INT          NOT NULL,
     status        VARCHAR(50)  NOT NULL,
-    venue_id      BIGINT       NOT NULL,
+    venue_id      UUID         NOT NULL,
     FOREIGN KEY (venue_id) REFERENCES venues (id)
 );
