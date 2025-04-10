@@ -7,6 +7,7 @@ import com.example.eventservice.response.CategoryResponse;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +23,7 @@ public class CategoryService {
         .toList();
   }
 
-  public CategoryResponse findById(Long id) {
+  public CategoryResponse findById(UUID id) {
     return categoryRepository
         .findById(id)
         .map(category -> new CategoryResponse(category.getId(), category.getName()))
@@ -41,7 +42,7 @@ public class CategoryService {
     return new CategoryResponse(categoryDb.getId(), categoryDb.getName());
   }
 
-  public CategoryResponse updateCategory(Long id, CategoryRequest updatedCategory) {
+  public CategoryResponse updateCategory(UUID id, CategoryRequest updatedCategory) {
     Category category =
         categoryRepository
             .findById(id)
@@ -57,7 +58,7 @@ public class CategoryService {
     return new CategoryResponse(category.getId(), category.getName());
   }
 
-  public void deleteCategory(Long id) {
+  public void deleteCategory(UUID id) {
     if (!categoryRepository.existsById(id)) {
       throw new EntityNotFoundException("Category not found");
     }

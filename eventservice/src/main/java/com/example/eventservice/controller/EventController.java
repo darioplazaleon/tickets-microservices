@@ -4,6 +4,7 @@ import com.example.eventservice.request.EventAddRequest;
 import com.example.eventservice.response.EventRecord;
 import com.example.eventservice.response.EventResponse;
 import com.example.eventservice.service.EventService;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,7 +25,7 @@ public class EventController {
   }
 
   @GetMapping("/{eventId}")
-  public @ResponseBody EventRecord getEventById(@PathVariable Long eventId) {
+  public @ResponseBody EventRecord getEventById(@PathVariable UUID eventId) {
     return eventService.getEventById(eventId);
   }
 
@@ -36,20 +37,20 @@ public class EventController {
 
   @PutMapping("/update/{eventId}")
   public ResponseEntity<EventResponse> updateEvent(
-      @PathVariable Long eventId, @RequestBody EventAddRequest updatedEvent) {
+      @PathVariable UUID eventId, @RequestBody EventAddRequest updatedEvent) {
     EventResponse event = eventService.updateEvent(eventId, updatedEvent);
     return ResponseEntity.ok(event);
   }
 
   @DeleteMapping("/delete/{eventId}")
-  public ResponseEntity<Void> deleteEvent(@PathVariable Long eventId) {
+  public ResponseEntity<Void> deleteEvent(@PathVariable UUID eventId) {
     eventService.deleteEvent(eventId);
     return ResponseEntity.noContent().build();
   }
 
   @PutMapping("/event/{id}/capacity/{capacity}")
   public ResponseEntity<Void> updateEventCapacity(
-      @PathVariable Long id, @PathVariable Long capacity) {
+      @PathVariable UUID id, @PathVariable Long capacity) {
     eventService.updateEventCapacity(id, capacity);
     return ResponseEntity.ok().build();
   }

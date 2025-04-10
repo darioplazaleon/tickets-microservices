@@ -7,6 +7,7 @@ import com.example.eventservice.response.TagResponse;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +36,7 @@ public class TagService {
         .orElseGet(() -> tagRepository.save(Tag.builder().name(normalized).build()));
   }
 
-  public TagResponse findById(Long id) {
+  public TagResponse findById(UUID id) {
     var tag =
         tagRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Tag not found"));
     return new TagResponse(tag.getId(), tag.getName());
@@ -47,7 +48,7 @@ public class TagService {
         .toList();
   }
 
-  public TagResponse update(Long tagId, TagRequest tagRequest) {
+  public TagResponse update(UUID tagId, TagRequest tagRequest) {
     var tag =
         tagRepository
             .findById(tagId)
@@ -66,7 +67,7 @@ public class TagService {
     return new TagResponse(updatedTag.getId(), updatedTag.getName());
   }
 
-  public void delete(Long id) {
+  public void delete(UUID id) {
     var tag =
         tagRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Tag not found"));
     tagRepository.delete(tag);

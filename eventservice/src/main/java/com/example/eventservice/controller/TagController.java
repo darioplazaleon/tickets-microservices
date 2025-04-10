@@ -4,6 +4,7 @@ import com.example.eventservice.request.TagRequest;
 import com.example.eventservice.response.TagResponse;
 import com.example.eventservice.service.TagService;
 import java.util.List;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +23,7 @@ public class TagController {
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<TagResponse> getTagById(@PathVariable Long id) {
+  public ResponseEntity<TagResponse> getTagById(@PathVariable UUID id) {
     TagResponse tag = tagService.findById(id);
     return ResponseEntity.ok(tag);
   }
@@ -35,13 +36,13 @@ public class TagController {
 
   @PutMapping("/update/{id}")
   public ResponseEntity<TagResponse> updateTag(
-      @PathVariable Long id, @RequestBody TagRequest tagRequest) {
+      @PathVariable UUID id, @RequestBody TagRequest tagRequest) {
     TagResponse updatedTag = tagService.update(id, tagRequest);
     return ResponseEntity.ok(updatedTag);
   }
 
   @DeleteMapping("/delete/{id}")
-  public ResponseEntity<Void> deleteTag(@PathVariable Long id) {
+  public ResponseEntity<Void> deleteTag(@PathVariable UUID id) {
     tagService.delete(id);
     return ResponseEntity.noContent().build();
   }

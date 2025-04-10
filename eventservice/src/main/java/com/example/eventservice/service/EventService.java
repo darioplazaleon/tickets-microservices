@@ -10,6 +10,7 @@ import com.example.eventservice.response.EventResponse;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -26,7 +27,7 @@ public class EventService {
   private final CategoryRepository categoryRepository;
   private final TagService tagService;
 
-  public EventRecord getEventById(Long id) {
+  public EventRecord getEventById(UUID id) {
     Event event =
         eventRepository
             .findById(id)
@@ -76,7 +77,7 @@ public class EventService {
     return new EventRecord(savedEvent);
   }
 
-  public EventResponse updateEvent(Long id, EventAddRequest newEvent) {
+  public EventResponse updateEvent(UUID id, EventAddRequest newEvent) {
     Event event =
         eventRepository
             .findById(id)
@@ -102,7 +103,7 @@ public class EventService {
     return new EventResponse(updatedEvent);
   }
 
-  public void deleteEvent(Long id) {
+  public void deleteEvent(UUID id) {
     Event event =
         eventRepository
             .findById(id)
@@ -112,7 +113,7 @@ public class EventService {
     log.info("Deleted event with id: {}", id);
   }
 
-  public void updateEventCapacity(Long id, Long capacity) {
+  public void updateEventCapacity(UUID id, Long capacity) {
     Event event =
         eventRepository.findById(id).orElseThrow(() -> new RuntimeException("Event not found"));
     event.setLeftCapacity((int) (event.getLeftCapacity() - capacity));

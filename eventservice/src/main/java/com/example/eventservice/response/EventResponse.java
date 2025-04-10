@@ -5,9 +5,10 @@ import com.example.eventservice.entity.Event;
 import com.example.eventservice.entity.Tag;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 public record EventResponse(
-    Long eventId,
+    UUID id,
     String event,
     int capacity,
     BigDecimal ticketPrice,

@@ -1,3 +1,5 @@
 package com.example.eventservice.response;
 
-public record TagResponse(Long id, String name) {}
+import java.util.UUID;
+
+public record TagResponse(UUID id, String name) {}

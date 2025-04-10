@@ -1,6 +1,7 @@
 package com.example.eventservice.entity;
 
 import jakarta.persistence.*;
+import java.util.UUID;
 import lombok.*;
 
 @Entity
@@ -13,8 +14,8 @@ import lombok.*;
 public class Venue {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+  @Column(columnDefinition = "uuid")
+  private UUID id;
 
   @Column(nullable = false, unique = true)
   private String name;
@@ -28,6 +29,8 @@ public class Venue {
   @Column(nullable = false)
   private String city;
 
-  //    @OneToMany(mappedBy = "venue", cascade = CascadeType.ALL)
-  //    private List<Event> events;
+  @PrePersist
+  public void prePersist() {
+    if (this.id == null) this.id = UUID.randomUUID();
+  }
 }

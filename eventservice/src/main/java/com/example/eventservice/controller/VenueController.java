@@ -4,6 +4,7 @@ import com.example.eventservice.request.LocationAddRequest;
 import com.example.eventservice.response.LocationResponse;
 import com.example.eventservice.service.VenueService;
 import jakarta.persistence.EntityNotFoundException;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,7 +20,7 @@ public class VenueController {
   private final VenueService venueService;
 
   @GetMapping("/{venueId}")
-  public ResponseEntity<LocationResponse> getVenueById(@PathVariable Long venueId) {
+  public ResponseEntity<LocationResponse> getVenueById(@PathVariable UUID venueId) {
     try {
       LocationResponse locationResponse = venueService.getVenueById(venueId);
       return ResponseEntity.ok(locationResponse);
@@ -33,15 +34,15 @@ public class VenueController {
     return venueService.getAllVenues(pageable);
   }
 
-  @PostMapping("/add")
+  @PostMapping("/create")
   public ResponseEntity<LocationResponse> createVenue(@RequestBody LocationAddRequest newLocation) {
     LocationResponse locationResponse = venueService.createVenue(newLocation);
     return ResponseEntity.status(HttpStatus.CREATED).body(locationResponse);
   }
 
-  @PutMapping("/{venueId}/update")
+  @PutMapping("/update/{venueId}")
   public ResponseEntity<LocationResponse> updateVenue(
-      @PathVariable Long venueId, @RequestBody LocationAddRequest newLocation) {
+      @PathVariable UUID venueId, @RequestBody LocationAddRequest newLocation) {
     try {
       LocationResponse locationResponse = venueService.updateVenue(venueId, newLocation);
       return ResponseEntity.ok(locationResponse);
@@ -50,8 +51,8 @@ public class VenueController {
     }
   }
 
-  @DeleteMapping("/{venueId}/delete")
-  public ResponseEntity<Void> deleteVenue(@PathVariable Long venueId) {
+  @DeleteMapping("/delete/{venueId}")
+  public ResponseEntity<Void> deleteVenue(@PathVariable UUID venueId) {
     try {
       venueService.deleteVenue(venueId);
       return ResponseEntity.noContent().build();

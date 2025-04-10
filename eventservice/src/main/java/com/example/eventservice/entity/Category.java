@@ -1,6 +1,7 @@
 package com.example.eventservice.entity;
 
 import jakarta.persistence.*;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,9 +16,14 @@ import lombok.NoArgsConstructor;
 public class Category {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+  @Column(columnDefinition = "uuid")
+  private UUID id;
 
   @Column(nullable = false, unique = true)
   private String name;
+
+  @PrePersist
+  public void prePersist() {
+    if (this.id == null) this.id = UUID.randomUUID();
+  }
 }

@@ -4,6 +4,7 @@ import com.example.eventservice.request.CategoryRequest;
 import com.example.eventservice.response.CategoryResponse;
 import com.example.eventservice.service.CategoryService;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -23,7 +24,7 @@ public class CategoryController {
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<CategoryResponse> getCategoryById(@PathVariable Long id) {
+  public ResponseEntity<CategoryResponse> getCategoryById(@PathVariable UUID id) {
     CategoryResponse category = categoryService.findById(id);
     return ResponseEntity.ok(category);
   }
@@ -37,13 +38,13 @@ public class CategoryController {
 
   @PutMapping("/update/{id}")
   public ResponseEntity<CategoryResponse> updateCategory(
-      @PathVariable Long id, @RequestBody CategoryRequest categoryRequest) {
+      @PathVariable UUID id, @RequestBody CategoryRequest categoryRequest) {
     CategoryResponse category = categoryService.updateCategory(id, categoryRequest);
     return ResponseEntity.ok(category);
   }
 
   @DeleteMapping("/delete/{id}")
-  public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
+  public ResponseEntity<Void> deleteCategory(@PathVariable UUID id) {
     categoryService.deleteCategory(id);
     return ResponseEntity.noContent().build();
   }
