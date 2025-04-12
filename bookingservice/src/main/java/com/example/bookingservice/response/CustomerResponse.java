@@ -2,8 +2,10 @@ package com.example.bookingservice.response;
 
 import com.example.bookingservice.entity.Customer;
 
+import java.util.UUID;
+
 public record CustomerResponse(
-        Long id,
+        UUID id,
         String username,
         String email,
         String fullName

@@ -4,20 +4,28 @@ import com.example.bookingservice.request.BookingRequest;
 import com.example.bookingservice.response.BookingResponse;
 import com.example.bookingservice.service.BookingService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/bookings")
 @RequiredArgsConstructor
 public class BookingController {
 
-    private final BookingService bookingService;
+  private final BookingService bookingService;
 
-    @PostMapping(consumes = "application/json", produces = "application/json", path = "/booking")
-    public BookingResponse createBooking(@RequestBody BookingRequest request) {
-        return bookingService.createBooking(request);
-    }
+  @PostMapping("/create")
+  public ResponseEntity<BookingResponse> createBooking(
+      @RequestHeader("X-User-Id") String userId,
+      @RequestHeader("X-Correlation-Id") String correlationId,
+      @RequestBody BookingRequest request) {
+    log.info(
+        "Booking request: {}, from user {} with correlationId {}", request, userId, correlationId);
+    System.out.println(userId);
+    var newBooking = bookingService.createBooking(userId, correlationId, request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(newBooking);
+  }
 }

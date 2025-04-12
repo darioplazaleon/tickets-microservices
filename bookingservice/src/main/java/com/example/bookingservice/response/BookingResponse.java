@@ -1,19 +1,13 @@
 package com.example.bookingservice.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
+import java.util.UUID;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+import com.example.bookingservice.entity.Booking;
+import lombok.Builder;
+
 @Builder
-public class BookingResponse {
-    private Long userId;
-    private Long eventId;
-    private Long ticketCount;
-    private BigDecimal totalPrice;
+public record BookingResponse(
+        UUID bookingId, UUID customerId, UUID eventId, int ticketCount, BigDecimal totalPrice) {
+
 }

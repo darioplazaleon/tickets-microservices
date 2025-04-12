@@ -1,18 +1,22 @@
 package com.example.bookingservice.service;
 
 import com.example.bookingservice.client.InventoryServiceClient;
+import com.example.bookingservice.entity.Booking;
+import com.example.bookingservice.entity.BookingStatus;
 import com.example.bookingservice.entity.Customer;
 import com.example.bookingservice.event.BookingEvent;
+import com.example.bookingservice.repository.BookingRepository;
 import com.example.bookingservice.repository.CustomerRepository;
 import com.example.bookingservice.request.BookingRequest;
 import com.example.bookingservice.response.BookingResponse;
 import com.example.bookingservice.response.EventResponse;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
 
 @Slf4j
 @Service
@@ -21,40 +25,64 @@ public class BookingService {
 
   private final CustomerRepository customerRepository;
   private final InventoryServiceClient inventoryServiceClient;
+  private final BookingRepository bookingRepository;
   private final KafkaTemplate<String, BookingEvent> kafkaTemplate;
 
-  public BookingResponse createBooking(BookingRequest request) {
+  public BookingResponse createBooking(
+      String userId, String correlationId, BookingRequest request) {
     Customer costumer =
         customerRepository
             .findById(request.userId())
             .orElseThrow(() -> new RuntimeException("Customer not found"));
 
     EventResponse eventResponse = inventoryServiceClient.getEvent(request.eventId());
-    System.out.println("Event service response" + eventResponse);
 
-    if (eventResponse.getCapacity() < request.ticketCount()) {
+    if (eventResponse.capacity() < request.ticketCount()) {
       throw new RuntimeException("Not enough capacity");
     }
 
-    BookingEvent bookingEvent = createBookingEvent(request, costumer, eventResponse);
+    Booking booking =
+        Booking.builder()
+            .eventId(request.eventId())
+            .customerId(request.userId())
+            .status(BookingStatus.PENDING)
+            .quantity(request.ticketCount())
+            .build();
 
-    kafkaTemplate.send("booking", bookingEvent);
+    bookingRepository.save(booking);
+
+    BookingEvent bookingEvent =
+        createBookingEvent(
+            request, costumer, eventResponse, userId, correlationId, booking.getId());
+
+    kafkaTemplate.send("tickets.booking.created", bookingEvent);
     log.info("Booking event sent to kafka topic: {}", bookingEvent);
 
     return BookingResponse.builder()
-            .userId(request.userId())
-            .eventId(request.eventId())
-            .totalPrice(eventResponse.getTicketPrice())
-            .ticketCount(request.ticketCount())
-            .build();
+        .bookingId(booking.getId())
+        .customerId(booking.getCustomerId())
+        .eventId(booking.getEventId())
+        .ticketCount(booking.getQuantity())
+        .totalPrice(eventResponse.ticketPrice().multiply(BigDecimal.valueOf(request.ticketCount())))
+        .build();
   }
 
-  private BookingEvent createBookingEvent (BookingRequest request, Customer customer, EventResponse eventResponse) {
+  private BookingEvent createBookingEvent(
+      BookingRequest request,
+      Customer customer,
+      EventResponse eventResponse,
+      String userId,
+      String correlationId,
+      UUID bookingId) {
     return BookingEvent.builder()
+        .bookingId(bookingId)
         .eventId(request.eventId())
-        .userId(customer.getId())
+        .customerId(customer.getId())
         .ticketCount(request.ticketCount())
-        .totalPrice(eventResponse.getTicketPrice().multiply(BigDecimal.valueOf(request.ticketCount())))
+        .totalPrice(eventResponse.ticketPrice().multiply(BigDecimal.valueOf(request.ticketCount())))
+        .correlationId(correlationId)
+        .userId(userId)
+        .createdAt(Instant.now())
         .build();
   }
 }

@@ -1,19 +1,17 @@
 package com.example.bookingservice.event;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.UUID;
+import lombok.Builder;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
-public class BookingEvent {
-    private Long eventId;
-    private Long userId;
-    private Long ticketCount;
-    private BigDecimal totalPrice;
-}
+public record BookingEvent(
+    UUID bookingId,
+    UUID customerId,
+    UUID eventId,
+    int ticketCount,
+    String correlationId,
+    String userId,
+    BigDecimal totalPrice,
+    Instant createdAt) {}
