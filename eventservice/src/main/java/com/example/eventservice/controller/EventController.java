@@ -48,7 +48,7 @@ public class EventController {
     return ResponseEntity.noContent().build();
   }
 
-  @PutMapping("/event/{id}/capacity/{capacity}")
+  @PutMapping("/{id}/capacity/{capacity}")
   public ResponseEntity<Void> updateEventCapacity(
       @PathVariable UUID id, @PathVariable Long capacity) {
     eventService.updateEventCapacity(id, capacity);
