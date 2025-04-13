@@ -6,14 +6,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+import java.util.UUID;
+
 @Builder
-public class VenueResponse {
-    private Long id;
-    private String name;
-    private int totalCapacity;
-    private String address;
-    private String city;
+public record VenueResponse (
+    UUID id,
+    String name,
+    int totalCapacity,
+    String address,
+    String city
+) {
 }

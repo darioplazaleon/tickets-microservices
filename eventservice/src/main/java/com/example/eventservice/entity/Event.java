@@ -43,7 +43,7 @@ public class Event {
   @Column(name = "ticket_price", nullable = false)
   private BigDecimal ticketPrice;
 
-  @Column(name = "capacity",nullable = false)
+  @Column(name = "capacity", nullable = false)
   private int capacity;
 
   @ManyToOne
@@ -52,7 +52,7 @@ public class Event {
 
   @Column(name = "created_at", updatable = false)
   private Instant createdAt;
-  
+
   @Column(name = "updated_at")
   private Instant updatedAt;
 

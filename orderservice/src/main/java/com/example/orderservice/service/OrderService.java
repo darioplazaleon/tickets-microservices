@@ -26,8 +26,8 @@ public class OrderService {
         Order order = createOrder(bookingEvent);
         orderRepository.saveAndFlush(order);
 
-        eventServiceClient.updateEventCapacity(bookingEvent.getEventId(), bookingEvent.getTicketCount());
-        log.info("Event capacity updated for event: {}", bookingEvent.getEventId());
+        eventServiceClient.updateEventCapacity(bookingEvent.eventId(), bookingEvent.ticketCount());
+        log.info("Event capacity updated for event: {}", bookingEvent.eventId());
     }
 
     public OrderResponse getOrderById(Long orderId) {
