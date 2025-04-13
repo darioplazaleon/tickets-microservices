@@ -3,6 +3,7 @@ package com.example.bookingservice.controller;
 import com.example.bookingservice.request.BookingRequest;
 import com.example.bookingservice.response.BookingResponse;
 import com.example.bookingservice.service.BookingService;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -20,7 +21,7 @@ public class BookingController {
   @PostMapping("/create")
   public ResponseEntity<BookingResponse> createBooking(
       @RequestHeader("X-User-Id") String userId,
-      @RequestHeader("X-Correlation-Id") String correlationId,
+      @RequestHeader("X-Correlation-Id") UUID correlationId,
       @RequestBody BookingRequest request) {
     log.info(
         "Booking request: {}, from user {} with correlationId {}", request, userId, correlationId);

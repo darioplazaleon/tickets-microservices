@@ -29,7 +29,7 @@ public class BookingService {
   private final KafkaTemplate<String, BookingEvent> kafkaTemplate;
 
   public BookingResponse createBooking(
-      String userId, String correlationId, BookingRequest request) {
+      String userId, UUID correlationId, BookingRequest request) {
     Customer costumer =
         customerRepository
             .findById(request.userId())
@@ -72,7 +72,7 @@ public class BookingService {
       Customer customer,
       EventResponse eventResponse,
       String userId,
-      String correlationId,
+      UUID correlationId,
       UUID bookingId) {
     return BookingEvent.builder()
         .bookingId(bookingId)

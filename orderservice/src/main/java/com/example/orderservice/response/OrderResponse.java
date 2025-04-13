@@ -1,18 +1,20 @@
 package com.example.orderservice.response;
 
 import com.example.orderservice.entity.Order;
+import com.example.orderservice.entity.OrderStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record OrderResponse(
-        Long orderId,
+        UUID orderId,
         BigDecimal totalPrice,
-        Long quantity,
+        int quantity,
         LocalDateTime timestamp,
-        String status,
-        Long customerId,
-        Long eventId
+        OrderStatus status,
+        UUID customerId,
+        UUID eventId
 ) {
     public OrderResponse(Order order) {
         this(
@@ -20,7 +22,7 @@ public record OrderResponse(
                 order.getTotalPrice(),
                 order.getTicketCount(),
                 order.getCreatedAt(),
-                order.getStatus().name(),
+                order.getStatus(),
                 order.getCustomerId(),
                 order.getEventId()
         );

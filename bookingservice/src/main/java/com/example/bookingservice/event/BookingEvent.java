@@ -11,7 +11,7 @@ public record BookingEvent(
     UUID customerId,
     UUID eventId,
     int ticketCount,
-    String correlationId,
+    UUID correlationId,
     String userId,
     BigDecimal totalPrice,
     Instant createdAt) {}
