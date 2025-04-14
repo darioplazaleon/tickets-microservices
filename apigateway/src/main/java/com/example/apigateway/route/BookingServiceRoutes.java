@@ -20,9 +20,6 @@ import java.util.UUID;
 @Configuration
 public class BookingServiceRoutes {
 
-    String userId = "4818";
-    String correlationId = "1234";
-
     @Bean
     public RouterFunction<ServerResponse> bookingRoutes() {
         return GatewayRouterFunctions.route("booking-service")

@@ -1,5 +1,6 @@
 package com.example.apigateway.route;
 
+import com.example.apigateway.config.CustomHeaderFilter;
 import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions;
 import org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions;
 import org.springframework.context.annotation.Bean;
@@ -19,8 +20,10 @@ public class EventServiceRoutes {
                         request -> forwardWithPathVariable(request, "eventId", "http://localhost:8080/api/v1/event/"))
                 .route(RequestPredicates.GET("/api/v1/venue/{venueId}"),
                         request -> forwardWithPathVariable(request, "venueId", "http://localhost:8080/api/v1/venue/"))
+                .route(RequestPredicates.POST("/api/v1/events/create"),
+                        HandlerFunctions.http("http://localhost:8080/api/v1/events/create"))
+                .filter(CustomHeaderFilter.addCustomHeaders())
                 .build();
-
     }
 
     private static ServerResponse forwardWithPathVariable(ServerRequest request, String pathVariable, String baseURl) throws Exception {
