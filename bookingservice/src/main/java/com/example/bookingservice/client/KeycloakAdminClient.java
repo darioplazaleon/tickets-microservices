@@ -3,6 +3,7 @@ package com.example.bookingservice.client;
 import com.example.bookingservice.request.UserRequest;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,7 +32,7 @@ public class KeycloakAdminClient {
     @Value("${keycloak.admin.client-id}")
     private String clientId;
 
-    public String createUserAngGetId(UserRequest userRequest) {
+    public UUID createUserAngGetId(UserRequest userRequest) {
         String token = getAdminAccessToken();
 
         Map<String, Object> user = Map.of(
@@ -62,7 +63,7 @@ public class KeycloakAdminClient {
         }
 
         String location = Objects.requireNonNull(response.getHeaders().getLocation()).toString();
-        return location.substring(location.lastIndexOf('/') + 1);
+        return UUID.fromString(location.substring(location.lastIndexOf('/') + 1));
     }
 
     private String getAdminAccessToken() {

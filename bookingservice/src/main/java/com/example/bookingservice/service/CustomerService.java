@@ -7,6 +7,7 @@ import com.example.bookingservice.request.UserRequest;
 import com.example.bookingservice.response.CustomerResponse;
 import jakarta.persistence.EntityExistsException;
 import java.time.LocalDate;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -26,11 +27,11 @@ public class CustomerService {
       throw new EntityExistsException("Username already exists");
     }
 
-    String keycloakId = keycloakAdminClient.createUserAngGetId(userRequest);
+    UUID keycloakId = keycloakAdminClient.createUserAngGetId(userRequest);
 
     Customer customer =
         Customer.builder()
-            .keycloakId(keycloakId)
+                .id(keycloakId)
             .username(userRequest.username())
             .email(userRequest.email())
             .fullName(userRequest.fullName())

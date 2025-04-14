@@ -23,9 +23,6 @@ public class Customer {
     private UUID id;
 
     @Column(nullable = false, unique = true)
-    private String keycloakId;
-
-    @Column(nullable = false, unique = true)
     private String username;
 
     @Column(nullable = false, unique = true)
