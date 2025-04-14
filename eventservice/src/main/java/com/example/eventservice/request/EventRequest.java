@@ -12,6 +12,5 @@ public record EventRequest(
     LocalDateTime endDate,
     UUID categoryId,
     List<String> tagsNames,
-    BigDecimal ticketPrice,
     List<TicketTypeRequest> ticketTypes
 ) {}

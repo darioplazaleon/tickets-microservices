@@ -22,14 +22,12 @@ public class Event {
   @Column(columnDefinition = "uuid")
   private UUID id;
 
-  @Column private String name;
+  @Column(nullable = false)
+  private String name;
 
   @ManyToOne
   @JoinColumn(name = "venue_id")
   private Venue venue;
-
-  @Column(nullable = false)
-  private int leftCapacity;
 
   @Column(nullable = false)
   private LocalDateTime startDate;
@@ -40,12 +38,6 @@ public class Event {
   @Enumerated(EnumType.STRING)
   private EventStatus status;
 
-  @Column(name = "ticket_price", nullable = false)
-  private BigDecimal ticketPrice;
-
-  @Column(name = "capacity", nullable = false)
-  private int capacity;
-
   @ManyToOne
   @JoinColumn(name = "category_id")
   private Category category;
@@ -55,6 +47,9 @@ public class Event {
 
   @Column(name = "updated_at")
   private Instant updatedAt;
+
+  @Column(name = "created_by_user_id", nullable = false)
+  private UUID createdByUserId;
 
   @ManyToMany
   @JoinTable(
@@ -70,6 +65,15 @@ public class Event {
   public void prePersist() {
     if (this.id == null) this.id = UUID.randomUUID();
     if (this.createdAt == null) this.createdAt = Instant.now();
-    if (capacity == 0 && venue != null) this.capacity = venue.getTotalCapacity();
+  }
+
+  public int getTotalCapacity() {
+    return ticketTypes.stream().mapToInt(TicketType::getCapacity).sum();
+  }
+
+  public int getRemainingCapacity() {
+    return ticketTypes.stream()
+        .mapToInt(t -> t.getCapacity() - t.getReserved() - t.getSold())
+        .sum();
   }
 }

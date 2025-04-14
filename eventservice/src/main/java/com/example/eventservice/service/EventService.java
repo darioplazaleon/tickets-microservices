@@ -41,7 +41,7 @@ public class EventService {
     return eventRepository.findAll(pageable).map(EventResponse::new);
   }
 
-  public EventRecord createEvent(EventRequest newEvent) {
+  public EventRecord createEvent(EventRequest newEvent, UUID createdByUserId) {
     if (eventRepository.findByName(newEvent.name()).isPresent()) {
       throw new EntityExistsException("Event already exists");
     }
@@ -66,10 +66,9 @@ public class EventService {
             .venue(venue)
             .startDate(newEvent.startDate())
             .endDate(newEvent.endDate())
-            .ticketPrice(newEvent.ticketPrice())
-            .leftCapacity(venue.getTotalCapacity())
             .status(EventStatus.UPCOMING)
             .category(category)
+            .createdByUserId(createdByUserId)
             .tags(tags)
             .build();
 
@@ -104,7 +103,6 @@ public class EventService {
     event.setName(newEvent.name());
     event.setStartDate(newEvent.startDate());
     event.setEndDate(newEvent.endDate());
-    event.setTicketPrice(newEvent.ticketPrice());
     event.setCategory(category);
 
     Event updatedEvent = eventRepository.save(event);
@@ -124,7 +122,6 @@ public class EventService {
   public void updateEventCapacity(UUID id, Long capacity) {
     Event event =
         eventRepository.findById(id).orElseThrow(() -> new RuntimeException("Event not found"));
-    event.setLeftCapacity((int) (event.getLeftCapacity() - capacity));
     eventRepository.saveAndFlush(event);
     log.info("Updated event capacity for event id: {} with tickets booked: {}", id, capacity);
   }

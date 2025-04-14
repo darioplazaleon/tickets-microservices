@@ -34,7 +34,7 @@ public class TicketType {
     @Column(nullable = false)
     private BigDecimal price;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Event event;
 
     @PrePersist
