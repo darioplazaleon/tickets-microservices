@@ -4,7 +4,7 @@ import com.example.eventservice.entity.*;
 import com.example.eventservice.repository.CategoryRepository;
 import com.example.eventservice.repository.EventRepository;
 import com.example.eventservice.repository.VenueRepository;
-import com.example.eventservice.request.EventAddRequest;
+import com.example.eventservice.request.EventRequest;
 import com.example.eventservice.response.EventRecord;
 import com.example.eventservice.response.EventResponse;
 import jakarta.persistence.EntityExistsException;
@@ -26,6 +26,7 @@ public class EventService {
   private final VenueRepository venueRepository;
   private final CategoryRepository categoryRepository;
   private final TagService tagService;
+  private final TicketTypeService ticketTypeService;
 
   public EventRecord getEventById(UUID id) {
     Event event =
@@ -40,7 +41,7 @@ public class EventService {
     return eventRepository.findAll(pageable).map(EventResponse::new);
   }
 
-  public EventRecord createEvent(EventAddRequest newEvent) {
+  public EventRecord createEvent(EventRequest newEvent) {
     if (eventRepository.findByName(newEvent.name()).isPresent()) {
       throw new EntityExistsException("Event already exists");
     }
@@ -72,12 +73,19 @@ public class EventService {
             .tags(tags)
             .build();
 
+    List<TicketType> ticketTypes =
+        newEvent.ticketTypes().stream()
+            .map(tt -> ticketTypeService.saveTicketType(tt, eventDb))
+            .toList();
+
+    eventDb.setTicketTypes(ticketTypes);
+
     var savedEvent = eventRepository.save(eventDb);
 
     return new EventRecord(savedEvent);
   }
 
-  public EventResponse updateEvent(UUID id, EventAddRequest newEvent) {
+  public EventResponse updateEvent(UUID id, EventRequest newEvent) {
     Event event =
         eventRepository
             .findById(id)

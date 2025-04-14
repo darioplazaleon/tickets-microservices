@@ -1,6 +1,6 @@
 package com.example.eventservice.controller;
 
-import com.example.eventservice.request.EventAddRequest;
+import com.example.eventservice.request.EventRequest;
 import com.example.eventservice.response.EventRecord;
 import com.example.eventservice.response.EventResponse;
 import com.example.eventservice.service.EventService;
@@ -30,14 +30,14 @@ public class EventController {
   }
 
   @PostMapping("/create")
-  public ResponseEntity<EventRecord> createEvent(@RequestBody EventAddRequest newEvent) {
+  public ResponseEntity<EventRecord> createEvent(@RequestBody EventRequest newEvent) {
     EventRecord event = eventService.createEvent(newEvent);
     return ResponseEntity.status(HttpStatus.CREATED).body(event);
   }
 
   @PutMapping("/update/{eventId}")
   public ResponseEntity<EventResponse> updateEvent(
-      @PathVariable UUID eventId, @RequestBody EventAddRequest updatedEvent) {
+      @PathVariable UUID eventId, @RequestBody EventRequest updatedEvent) {
     EventResponse event = eventService.updateEvent(eventId, updatedEvent);
     return ResponseEntity.ok(event);
   }

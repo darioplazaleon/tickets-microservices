@@ -63,6 +63,9 @@ public class Event {
       inverseJoinColumns = @JoinColumn(name = "tag_id"))
   private List<Tag> tags = new ArrayList<>();
 
+  @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<TicketType> ticketTypes = new ArrayList<>();
+
   @PrePersist
   public void prePersist() {
     if (this.id == null) this.id = UUID.randomUUID();
