@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -20,8 +21,7 @@ public class OrderExpirationScheduler {
 
     @Scheduled(fixedDelay = 60__000)
     public void expireOldOrders() {
-        LocalDateTime now = LocalDateTime.now();
-        List<Order> expiredOrders = orderRepository.findExpiredUnpaidOrders(now);
+        List<Order> expiredOrders = orderRepository.findExpiredUnpaidOrders(Instant.now());
 
         if (!expiredOrders.isEmpty()) {
             log.info("Expired orders found: {}", expiredOrders);

@@ -8,53 +8,64 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
+@Table(name = "orders")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "orders")
 public class Order {
 
     @Id
     private UUID id;
 
-    @Column(name = "total")
+    @Column(name = "total", nullable = false)
     private BigDecimal totalPrice;
 
-    @Column(name = "quantity")
-    private int ticketCount;
+    @Column(name = "total_quantity", nullable = false)
+    private int totalQuantity;
 
-    @Column(name = "status")
     @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
     private OrderStatus status;
 
-    @Column(name = "correlation_id")
+    @Column(name = "correlation_id", nullable = false)
     private UUID correlationId;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
-    @Column(name = "customer_id")
+    @Column(name = "customer_id", nullable = false)
     private UUID customerId;
 
-    @Column(name = "event_id")
+    @Column(name = "event_id", nullable = false)
     private UUID eventId;
 
     @Column(nullable = false)
-    private LocalDateTime expiresAt;
+    private UUID bookingId;
+
+    @Column(nullable = false)
+    private Instant expiresAt;
 
     private String paymentIntentId;
-    private LocalDateTime paidAt;
+
+    private Instant paidAt;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderTicket> ticketItems = new ArrayList<>();
 
     @PrePersist
     public void prePersist() {
-        if (this.id == null) {
-            this.id = UUID.randomUUID();
-        }
+        if (this.id == null) this.id = UUID.randomUUID();
+        if (this.createdAt == null) this.createdAt = Instant.now();
     }
 }
+
