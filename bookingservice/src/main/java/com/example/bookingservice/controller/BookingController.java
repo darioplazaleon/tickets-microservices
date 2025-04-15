@@ -20,7 +20,7 @@ public class BookingController {
 
   @PostMapping("/create")
   public ResponseEntity<BookingResponse> createBooking(
-      @RequestHeader("X-User-Id") String userId,
+      @RequestHeader("X-User-Id") UUID userId,
       @RequestHeader("X-Correlation-Id") UUID correlationId,
       @RequestBody BookingRequest request) {
     log.info(

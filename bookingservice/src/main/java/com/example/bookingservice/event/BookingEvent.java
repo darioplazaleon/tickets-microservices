@@ -2,16 +2,18 @@ package com.example.bookingservice.event;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import lombok.Builder;
 
 @Builder
 public record BookingEvent(
     UUID bookingId,
-    UUID customerId,
+    UUID userId,
     UUID eventId,
-    int ticketCount,
+    List<TicketInfo> tickets,
     UUID correlationId,
-    String userId,
     BigDecimal totalPrice,
-    Instant createdAt) {}
+    Instant createdAt) {
+  public record TicketInfo(String ticketType, int quantity, BigDecimal unitPrice) {}
+}

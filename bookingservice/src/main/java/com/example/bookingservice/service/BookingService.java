@@ -3,19 +3,26 @@ package com.example.bookingservice.service;
 import com.example.bookingservice.client.InventoryServiceClient;
 import com.example.bookingservice.entity.Booking;
 import com.example.bookingservice.entity.BookingStatus;
+import com.example.bookingservice.entity.BookingTicket;
 import com.example.bookingservice.entity.Customer;
 import com.example.bookingservice.event.BookingEvent;
 import com.example.bookingservice.repository.BookingRepository;
 import com.example.bookingservice.repository.CustomerRepository;
 import com.example.bookingservice.request.BookingRequest;
+import com.example.bookingservice.request.TicketRequest;
 import com.example.bookingservice.response.BookingResponse;
 import com.example.bookingservice.response.EventResponse;
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -28,61 +35,92 @@ public class BookingService {
   private final BookingRepository bookingRepository;
   private final KafkaTemplate<String, BookingEvent> kafkaTemplate;
 
-  public BookingResponse createBooking(
-      String userId, UUID correlationId, BookingRequest request) {
+  public BookingResponse createBooking(UUID userId, UUID correlationId, BookingRequest request) {
+
+    if (request.tickets().isEmpty()) {
+      throw new RuntimeException("No tickets found");
+    }
+
+    List<BookingTicket> bookingTickets = new ArrayList<>();
+    BigDecimal totalPrice = BigDecimal.ZERO;
+
+    for (TicketRequest ticket : request.tickets()) {
+      if (ticket.quantity() <= 0) {
+        throw new RuntimeException(
+            "Invalid ticket quantity for ticket type: " + ticket.ticketType());
+      }
+
+      BigDecimal unitPrice =
+          inventoryServiceClient.reserveTicket(
+              request.eventId(), ticket.ticketType(), ticket.quantity());
+
+      totalPrice = totalPrice.add(unitPrice.multiply(BigDecimal.valueOf(ticket.quantity())));
+
+      BookingTicket bookingTicket =
+          BookingTicket.builder()
+              .ticketType(ticket.ticketType())
+              .quantity(ticket.quantity())
+              .unitPrice(unitPrice)
+              .build();
+
+      bookingTickets.add(bookingTicket);
+    }
+
     Customer costumer =
         customerRepository
-            .findById(request.userId())
+            .findById(userId)
             .orElseThrow(() -> new RuntimeException("Customer not found"));
-
-    EventResponse eventResponse = inventoryServiceClient.getEvent(request.eventId());
-
-    if (eventResponse.capacity() < request.ticketCount()) {
-      throw new RuntimeException("Not enough capacity");
-    }
 
     Booking booking =
         Booking.builder()
             .eventId(request.eventId())
-            .customerId(request.userId())
+            .eventId(request.eventId())
+            .customerId(costumer.getId())
+            .totalPrice(totalPrice)
+            .tickets(bookingTickets)
             .status(BookingStatus.PENDING)
-            .quantity(request.ticketCount())
             .build();
+
+    bookingTickets.forEach(t -> t.setBooking(booking));
 
     bookingRepository.save(booking);
 
-    BookingEvent bookingEvent =
-        createBookingEvent(
-            request, costumer, eventResponse, userId, correlationId, booking.getId());
+    BookingEvent bookingEvent = createBookingEvent(booking, correlationId);
+    ProducerRecord<String, BookingEvent> record = new ProducerRecord<>(
+            "tickets.booking.created", bookingEvent);
 
-    kafkaTemplate.send("tickets.booking.created", bookingEvent);
+    record.headers().add("user-id", userId.toString().getBytes(StandardCharsets.UTF_8));
+    record.headers().add("correlation-id", correlationId.toString().getBytes(StandardCharsets.UTF_8));
+
+    kafkaTemplate.send(record);
     log.info("Booking event sent to kafka topic: {}", bookingEvent);
 
     return BookingResponse.builder()
         .bookingId(booking.getId())
         .customerId(booking.getCustomerId())
         .eventId(booking.getEventId())
-        .ticketCount(booking.getQuantity())
-        .totalPrice(eventResponse.ticketPrice().multiply(BigDecimal.valueOf(request.ticketCount())))
+        .totalPrice(totalPrice)
         .build();
   }
 
-  private BookingEvent createBookingEvent(
-      BookingRequest request,
-      Customer customer,
-      EventResponse eventResponse,
-      String userId,
-      UUID correlationId,
-      UUID bookingId) {
+  private BookingEvent createBookingEvent(Booking booking, UUID correlationId) {
+
+    List<BookingEvent.TicketInfo> tickets =
+        booking.getTickets().stream()
+            .map(
+                t ->
+                    new BookingEvent.TicketInfo(
+                        t.getTicketType(), t.getQuantity(), t.getUnitPrice()))
+            .toList();
+
     return BookingEvent.builder()
-        .bookingId(bookingId)
-        .eventId(request.eventId())
-        .customerId(customer.getId())
-        .ticketCount(request.ticketCount())
-        .totalPrice(eventResponse.ticketPrice().multiply(BigDecimal.valueOf(request.ticketCount())))
+        .bookingId(booking.getId())
+        .userId(booking.getCustomerId())
+        .eventId(booking.getEventId())
+        .tickets(tickets)
+        .totalPrice(booking.getTotalPrice())
         .correlationId(correlationId)
-        .userId(userId)
-        .createdAt(Instant.now())
+        .createdAt(booking.getCreatedAt())
         .build();
   }
 }

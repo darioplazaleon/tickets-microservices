@@ -53,7 +53,6 @@ public class OrderService {
     }
 
 
-
     private Order createOrder(BookingEvent bookingEvent) {
         return Order.builder()
                 .customerId(bookingEvent.customerId())
@@ -63,6 +62,7 @@ public class OrderService {
                 .correlationId(bookingEvent.correlationId())
                 .status(OrderStatus.PENDING)
                 .createdAt(LocalDateTime.now())
+                .expiresAt(LocalDateTime.now().plusMinutes(15))
                 .build();
     }
 }

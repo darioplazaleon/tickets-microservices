@@ -5,11 +5,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.UUID;
 
 public record BookingRequest (
-        UUID userId,
         UUID eventId,
-        int ticketCount
+        List<TicketRequest> tickets
 ) {
 }

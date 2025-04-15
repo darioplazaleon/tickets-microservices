@@ -45,6 +45,9 @@ public class Order {
     @Column(name = "event_id")
     private UUID eventId;
 
+    @Column(nullable = false)
+    private LocalDateTime expiresAt;
+
     private String paymentIntentId;
     private LocalDateTime paidAt;
 
@@ -54,5 +57,4 @@ public class Order {
             this.id = UUID.randomUUID();
         }
     }
-
 }

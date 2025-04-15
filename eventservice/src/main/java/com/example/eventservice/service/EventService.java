@@ -3,14 +3,21 @@ package com.example.eventservice.service;
 import com.example.eventservice.entity.*;
 import com.example.eventservice.repository.CategoryRepository;
 import com.example.eventservice.repository.EventRepository;
+import com.example.eventservice.repository.TicketTypeRepository;
 import com.example.eventservice.repository.VenueRepository;
 import com.example.eventservice.request.EventRequest;
+import com.example.eventservice.request.ReserveTicketRequest;
 import com.example.eventservice.response.EventRecord;
 import com.example.eventservice.response.EventResponse;
+import com.example.eventservice.response.ReserveTicketResponse;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -25,6 +32,7 @@ public class EventService {
   private final EventRepository eventRepository;
   private final VenueRepository venueRepository;
   private final CategoryRepository categoryRepository;
+  private final TicketTypeRepository ticketTypeRepository;
   private final TagService tagService;
   private final TicketTypeService ticketTypeService;
 

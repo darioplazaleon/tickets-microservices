@@ -1,4 +1,4 @@
-package com.example.eventservice.entity;
+package com.example.bookingservice.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -14,28 +14,19 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class TicketType {
+@Table(name = "booking_tickets")
+public class BookingTicket {
 
     @Id
     private UUID id;
 
-    @Column(nullable = false)
-    private String name;
+    private String ticketType;
+    private int quantity;
+    private BigDecimal unitPrice;
 
-    @Column(nullable = false)
-    private int capacity;
-
-    @Column(nullable = false)
-    private int reserved = 0;
-
-    @Column(nullable = false)
-    private int sold = 0;
-
-    @Column(nullable = false)
-    private BigDecimal price;
-
-    @ManyToOne()
-    private Event event;
+    @ManyToOne
+    @JoinColumn(name = "booking_id", nullable = false)
+    private Booking booking;
 
     @PrePersist
     public void prePersist() {
