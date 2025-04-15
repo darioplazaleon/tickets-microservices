@@ -6,23 +6,24 @@ import com.example.bookingservice.entity.BookingStatus;
 import com.example.bookingservice.entity.BookingTicket;
 import com.example.bookingservice.entity.Customer;
 import com.example.bookingservice.event.BookingEvent;
+import com.example.bookingservice.event.incoming.OrderExpiredEvent;
 import com.example.bookingservice.repository.BookingRepository;
 import com.example.bookingservice.repository.CustomerRepository;
 import com.example.bookingservice.request.BookingRequest;
 import com.example.bookingservice.request.TicketRequest;
 import com.example.bookingservice.response.BookingResponse;
-import com.example.bookingservice.response.EventResponse;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -101,6 +102,30 @@ public class BookingService {
         .eventId(booking.getEventId())
         .totalPrice(totalPrice)
         .build();
+  }
+
+  @KafkaListener(topics = "tickets.order.expired, group-id=booking-service")
+  public void handleOrderExpired(OrderExpiredEvent event, ConsumerRecord<String, OrderExpiredEvent> record) {
+    log.info("[BookingService] OrderExpiredEvent received for bookingId: {} (correlationId={})", event.bookingId(), event.correlationId());
+
+    Optional<Booking> bookingOptional = bookingRepository.findById(event.bookingId());
+
+    if (bookingOptional.isEmpty()) {
+      log.warn("Booking with ID {} does not exist. Ignoring event.", event.bookingId());
+      return;
+    }
+
+    Booking booking = bookingOptional.get();
+
+    if (booking.getStatus() != BookingStatus.PENDING) {
+      log.info("Booking {} is not in PENDING status. Ignoring event.", booking.getId());
+      return;
+    }
+
+    booking.setStatus(BookingStatus.EXPIRED);
+    bookingRepository.save(booking);
+
+    log.info("Booking {} status updated to EXPIRED", booking.getId());
   }
 
   private BookingEvent createBookingEvent(Booking booking, UUID correlationId) {

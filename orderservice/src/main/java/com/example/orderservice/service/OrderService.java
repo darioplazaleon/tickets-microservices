@@ -1,7 +1,6 @@
 package com.example.orderservice.service;
 
 import com.example.bookingservice.event.BookingEvent;
-import com.example.orderservice.client.EventServiceClient;
 import com.example.orderservice.entity.Order;
 import com.example.orderservice.entity.OrderStatus;
 import com.example.orderservice.entity.OrderTicket;
@@ -14,7 +13,6 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -41,7 +39,28 @@ public class OrderService {
     public OrderResponse getOrderById(UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
-        return new OrderResponse(order);
+
+        return createOrderResponse(order);
+    }
+
+    private OrderResponse createOrderResponse(Order order) {
+        List<OrderResponse.TicketItem> items = order.getTicketItems().stream()
+                .map(t -> new OrderResponse.TicketItem(
+                        t.getTicketType(),
+                        t.getQuantity(),
+                        t.getUnitPrice()
+                ))
+                .toList();
+
+        return new OrderResponse(
+                order.getId(),
+                order.getCustomerId(),
+                order.getEventId(),
+                order.getTotalPrice(),
+                order.getStatus(),
+                order.getExpiresAt(),
+                items
+        );
     }
 
     public void updateSuccessOrder(UUID orderId, PaymentSuccessRequest paymentInfo) {

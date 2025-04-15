@@ -6,26 +6,22 @@ import com.example.orderservice.entity.OrderStatus;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public record OrderResponse(
         UUID orderId,
-        BigDecimal totalPrice,
-        int quantity,
-        Instant timestamp,
-        OrderStatus status,
         UUID customerId,
-        UUID eventId
+        UUID eventId,
+        BigDecimal totalPrice,
+        OrderStatus status,
+        Instant expiresAt,
+        List<TicketItem> tickets
 ) {
-    public OrderResponse(Order order) {
-        this(
-                order.getId(),
-                order.getTotalPrice(),
-                order.getTotalQuantity(),
-                order.getCreatedAt(),
-                order.getStatus(),
-                order.getCustomerId(),
-                order.getEventId()
-        );
-    }
+    public record TicketItem(
+            String ticketType,
+            int quantity,
+            BigDecimal unitPrice
+    ) {}
+
 }
