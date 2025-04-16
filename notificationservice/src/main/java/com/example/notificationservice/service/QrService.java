@@ -1,5 +1,8 @@
 package com.example.notificationservice.service;
 
+import com.example.notificationservice.response.EventDetailsResponse;
+import com.example.shared.events.PaymentSucceededEvent;
+import com.example.shared.records.TicketInfo;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
@@ -13,8 +16,8 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Base64;
-import java.util.UUID;
 
 @Service
 public class QrService {
@@ -22,17 +25,34 @@ public class QrService {
     @Value("${qr.secret.key}")
     private String secretKey;
 
-    public String generateQRCode(UUID orderId, UUID userId, UUID eventId) {
-        String timestamp = java.time.Instant.now().toString();
+    public String generateQRCode(PaymentSucceededEvent event, EventDetailsResponse eventDetails) {
+        String timestamp = Instant.now().toString();
 
-        String data = "orderId=%s&userId=%s&eventId=%s&ticketCount=%d&timestamp=%s\",\n" +
-                "orderId, userId, eventId, ticketCount, timestamp";
+        String rawPayload = String.format(
+                "orderId=%s&userId=%s&eventId=%s&ticketCount=%d&timestamp=%s",
+                event.orderId(),
+                event.userId(),
+                event.eventId(),
+                event.tickets().stream().mapToInt(TicketInfo::quantity).sum(),
+                timestamp
+        );
 
-        String signature = generateSignature(data);
+        String signature = generateSignature(rawPayload);
 
-        String qrContent = String.format(
-                "{\"orderId\":\"%s\",\"userId\":\"%s\",\"eventId\":\"%s\",\"timestamp\":\"%s\",\"signature\":\"%s\"}",
-                orderId, userId, eventId, timestamp, signature
+        String qrContent = String.format("""
+                        {
+                            "orderId": "%s",
+                            "userId": "%s",
+                            "eventId": "%s",
+                            "timestamp": "%s",
+                            "signature": "%s"
+                        }
+                        """,
+                event.orderId(),
+                event.userId(),
+                event.eventId(),
+                timestamp,
+                signature
         );
 
         try {
