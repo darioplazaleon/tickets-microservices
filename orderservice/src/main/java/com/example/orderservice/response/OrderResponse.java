@@ -11,11 +11,13 @@ import java.util.UUID;
 
 public record OrderResponse(
         UUID orderId,
+        UUID bookingId,
         UUID customerId,
         UUID eventId,
         BigDecimal totalPrice,
-        OrderStatus status,
+        String status,
         Instant expiresAt,
+        UUID correlationId,
         List<TicketItem> tickets
 ) {
     public record TicketItem(
@@ -23,5 +25,4 @@ public record OrderResponse(
             int quantity,
             BigDecimal unitPrice
     ) {}
-
 }

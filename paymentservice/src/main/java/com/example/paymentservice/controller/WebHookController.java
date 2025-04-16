@@ -9,47 +9,50 @@ import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class WebHookController {
 
     private final PaymentService paymentService;
 
-    @PostMapping("/webhook")
-    public void handleWebHook(@RequestHeader("Stripe-Signature") String signature, @RequestBody String payload) {
-        System.out.println("Webhook received");
-//        System.out.println("Signature: " + signature);
-//        System.out.println("Payload: " + payload);
-        Event event = null;
+    @Value("${stripe.webhook.secret}")
+    private String webhookSecret;
 
+    @PostMapping("/webhook")
+    public ResponseEntity<String> handleWebHook(@RequestHeader("Stripe-Signature") String signature, @RequestBody String payload) {
+        log.info("Received webhook request");
+
+        Event event;
         try {
-            event = Webhook.constructEvent(payload, signature, "whsec_420c181d02d264c1467742bdad20e274f008e98ad1f310979a9853c2faa1b535");
-//            System.out.println("Event parsed" + event);
+            event = Webhook.constructEvent(payload, signature, webhookSecret);
         } catch ( SignatureVerificationException e) {
-            System.out.println("Invalid webhook signature: " + e.getMessage());
+            log.warn("Signature verification failed in webhook: {}", e.getMessage());
+            return ResponseEntity.status(400).body("Invalid signature");
         }
 
         EventDataObjectDeserializer deserializer = event.getDataObjectDeserializer();
-        StripeObject object = null;
+        StripeObject object = deserializer.getObject().orElse(null);
 
-        if (deserializer.getObject().isPresent()) {
-            object = deserializer.getObject().get();
-        } else {
-            System.out.println("Webhook error: no valid object found");
+        if (object == null) {
+            log.warn("Stripe object is null");
+            return ResponseEntity.badRequest().body("Invalid object");
         }
 
         switch (event.getType()) {
             case "checkout.session.completed":
-                if (object instanceof Session) {
-                    Session checkoutSession = (Session) object;
-                    String orderId = checkoutSession.getMetadata().get("order_id");
-                    System.out.println("Received order id from Stripe webhook: " + orderId);
-                    paymentService.updateSuccessOrderStatus(Long.parseLong(orderId));
+                if (object instanceof Session session) {
+                    String orderId = session.getMetadata().get("order_id");
+                    log.info("checkout.session.completed -> orderId={}", orderId);
+                    paymentService.handlePaymentSuccess(orderId);
                 }
                 break;
 
@@ -60,5 +63,7 @@ public class WebHookController {
             default:
                 System.out.println("Unhandled event type: " + event.getType());
         }
+
+        return ResponseEntity.ok("Webhook handled");
     }
 }

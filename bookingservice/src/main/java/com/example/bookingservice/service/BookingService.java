@@ -104,7 +104,7 @@ public class BookingService {
         .build();
   }
 
-  @KafkaListener(topics = "tickets.order.expired, group-id=booking-service")
+  @KafkaListener(topics = "tickets.order.expired", groupId = "booking-service")
   public void handleOrderExpired(OrderExpiredEvent event, ConsumerRecord<String, OrderExpiredEvent> record) {
     log.info("[BookingService] OrderExpiredEvent received for bookingId: {} (correlationId={})", event.bookingId(), event.correlationId());
 

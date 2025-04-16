@@ -133,4 +133,6 @@ public class EventService {
     eventRepository.saveAndFlush(event);
     log.info("Updated event capacity for event id: {} with tickets booked: {}", id, capacity);
   }
+
+
 }

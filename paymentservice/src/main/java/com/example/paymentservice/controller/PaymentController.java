@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/v1/payment")
 public class PaymentController {
@@ -19,7 +21,7 @@ public class PaymentController {
     }
 
     @PostMapping("/checkout/{orderId}")
-    public ResponseEntity<StripeResponse> checkoutOrder(@PathVariable Long orderId) {
+    public ResponseEntity<StripeResponse> checkoutOrder(@PathVariable UUID orderId) {
         StripeResponse response = paymentService.checkoutProducts(orderId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

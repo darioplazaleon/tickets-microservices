@@ -1,7 +1,8 @@
 package com.example.paymentservice.service;
 
 import com.example.paymentservice.client.OrderServiceClient;
-import com.example.paymentservice.event.PaymentEvent;
+import com.example.paymentservice.event.outgoing.PaymentSucceededEvent;
+import com.example.paymentservice.messaging.publisher.PaymentEventPublisher;
 import com.example.paymentservice.response.OrderResponse;
 import com.example.paymentservice.response.StripeResponse;
 import com.stripe.Stripe;
@@ -15,6 +16,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -24,67 +27,60 @@ public class PaymentService {
     @Value("${stripe.secretKey}")
     private String secretKey;
 
-    private final OrderServiceClient orderServiceClient;
-    private final KafkaTemplate<String, PaymentEvent> kafkaTemplate;
+    private final OrderServiceClient orderClient;
+    private final PaymentEventPublisher paymentEventPublisher;
 
-    public StripeResponse checkoutProducts(Long orderId) {
+    public StripeResponse checkoutProducts(UUID orderId) {
         Stripe.apiKey = secretKey;
 
-        OrderResponse orderResponse = orderServiceClient.getOrder(orderId);
+        OrderResponse order = orderClient.getOrder(orderId);
 
-        System.out.println(orderResponse);
+        if (!order.status().equalsIgnoreCase("PENDING")) {
+            throw new IllegalStateException("Order is not available for payment");
+        }
 
-        SessionCreateParams.LineItem.PriceData.ProductData productData = SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                .setName(orderResponse.eventId().toString())
-                .build();
+        List<SessionCreateParams.LineItem> lineItems = order.tickets().stream()
+                .map(ticket -> {
+                    SessionCreateParams.LineItem.PriceData.ProductData productData =
+                            SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                    .setName(ticket.ticketType())
+                                    .build();
 
-        SessionCreateParams.LineItem.PriceData priceData = SessionCreateParams.LineItem.PriceData.builder()
-                .setCurrency("usd")
-                .setUnitAmount(orderResponse.totalPrice().multiply(BigDecimal.valueOf(100)).longValue())
-                .setProductData(productData)
-                .build();
+                    SessionCreateParams.LineItem.PriceData priceData =
+                            SessionCreateParams.LineItem.PriceData.builder()
+                                    .setCurrency("usd")
+                                    .setUnitAmount(ticket.unitPrice().multiply(BigDecimal.valueOf(100)).longValue())
+                                    .setProductData(productData)
+                                    .build();
 
-        SessionCreateParams.LineItem lineItem = SessionCreateParams.LineItem.builder()
-                .setQuantity(1L)
-                .setPriceData(priceData)
-                .build();
+                    return SessionCreateParams.LineItem.builder()
+                            .setQuantity((long) ticket.quantity())
+                            .setPriceData(priceData)
+                            .build();
+                }).toList();
 
         SessionCreateParams params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
                 .setSuccessUrl("http://localhost:8080/success")
                 .setCancelUrl("http://localhost:8080/cancel")
-                .addLineItem(lineItem)
-                .putMetadata("order_id", orderResponse.eventId().toString())
+                .addAllLineItem(lineItems)
+                .putMetadata("order_id", order.orderId().toString())
                 .build();
 
-        Session session = null;
-
         try {
-            session = Session.create(params);
+            Session session = Session.create(params);
+            log.info("Session created for orderId {}", orderId);
+            return new StripeResponse("success", "Session created successfully", session);
         } catch (StripeException e) {
-            System.out.println(e.getMessage());
+            log.error("Error creating Stripe session: {}", e.getMessage(), e);
+            return new StripeResponse("error", "Failed to create session", null);
         }
-
-        return new StripeResponse(
-                "success",
-                "Payment session created successfully",
-                session
-        );
     }
 
-    public void updateSuccessOrderStatus(Long orderId) {
-        orderServiceClient.updateOrderStatus(orderId, "COMPLETED");
-        log.info("Order status with id: {} updated to COMPLETED", orderId);
-
-        OrderResponse orderResponse = orderServiceClient.getOrder(orderId);
-        var paymentEvent = new PaymentEvent(orderResponse);
-
-        kafkaTemplate.send("payment-success", paymentEvent);
-        log.info("Payment event sent to kafka topic: {}", paymentEvent);
+    public void handlePaymentSuccess(String orderIdRaw) {
+        UUID orderId = UUID.fromString(orderIdRaw);
+        OrderResponse order = orderClient.getOrder(orderId);
+        paymentEventPublisher.emitPaymentSucceededEvent(order);
     }
 
-    public void updateFailedOrderStatus(Long orderId) {
-        orderServiceClient.updateOrderStatus(orderId, "FAILED");
-        log.info("Order status with id: {} updated to FAILED", orderId);
-    }
 }

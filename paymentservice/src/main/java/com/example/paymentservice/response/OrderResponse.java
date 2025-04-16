@@ -1,15 +1,26 @@
 package com.example.paymentservice.response;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
 
 public record OrderResponse(
-        Long orderId,
+        UUID orderId,
+        UUID bookingId,
+        UUID customerId,
+        UUID eventId,
         BigDecimal totalPrice,
-        Long quantity,
-        LocalDateTime timestamp,
         String status,
-        Long customerId,
-        Long eventId
+        Instant expiresAt,
+        UUID correlationId,
+        List<TicketItem> tickets
 ) {
+    public record TicketItem(
+            String ticketType,
+            int quantity,
+            BigDecimal unitPrice
+    ) {}
 }
+

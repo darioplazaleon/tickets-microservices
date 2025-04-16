@@ -54,11 +54,13 @@ public class OrderService {
 
         return new OrderResponse(
                 order.getId(),
+                order.getBookingId(),
                 order.getCustomerId(),
                 order.getEventId(),
                 order.getTotalPrice(),
-                order.getStatus(),
+                order.getStatus().name(),
                 order.getExpiresAt(),
+                order.getCorrelationId(),
                 items
         );
     }

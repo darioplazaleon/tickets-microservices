@@ -14,6 +14,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Base64;
+import java.util.UUID;
 
 @Service
 public class QrService {
@@ -21,7 +22,7 @@ public class QrService {
     @Value("${qr.secret.key}")
     private String secretKey;
 
-    public String generateQRCode(Long orderId, Long userId, Long eventId, Long ticketCount) {
+    public String generateQRCode(UUID orderId, UUID userId, UUID eventId) {
         String timestamp = java.time.Instant.now().toString();
 
         String data = "orderId=%s&userId=%s&eventId=%s&ticketCount=%d&timestamp=%s\",\n" +
@@ -30,8 +31,8 @@ public class QrService {
         String signature = generateSignature(data);
 
         String qrContent = String.format(
-                "{\"orderId\":\"%s\",\"userId\":\"%s\",\"eventId\":\"%s\",\"ticketCount\":%d,\"timestamp\":\"%s\",\"signature\":\"%s\"}",
-                orderId, userId, eventId, ticketCount, timestamp, signature
+                "{\"orderId\":\"%s\",\"userId\":\"%s\",\"eventId\":\"%s\",\"timestamp\":\"%s\",\"signature\":\"%s\"}",
+                orderId, userId, eventId, timestamp, signature
         );
 
         try {
