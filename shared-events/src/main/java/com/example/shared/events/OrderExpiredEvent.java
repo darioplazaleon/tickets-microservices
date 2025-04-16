@@ -1,4 +1,6 @@
-package com.example.eventservice.event.incoming;
+package com.example.shared.events;
+
+import com.example.shared.records.TicketInfoSimple;
 
 import java.time.Instant;
 import java.util.List;
@@ -8,14 +10,9 @@ public record OrderExpiredEvent(
         UUID orderId,
         UUID bookingId,
         UUID eventId,
-        List<TicketInfo> tickets,
+        List<TicketInfoSimple> tickets,
         UUID correlationId,
         Instant expiredAt
 ) {
-    public record TicketInfo(
-            String ticketType,
-            int quantity
-    ) {
-    }
 }
 

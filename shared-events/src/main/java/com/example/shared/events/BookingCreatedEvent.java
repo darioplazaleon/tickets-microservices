@@ -1,15 +1,13 @@
-package com.example.bookingservice.event;
+package com.example.shared.events;
 
-
-import lombok.Builder;
+import com.example.shared.records.TicketInfo;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-@Builder
-public record BookingEvent(
+public record BookingCreatedEvent(
         UUID bookingId,
         UUID userId,
         UUID eventId,
@@ -17,5 +15,4 @@ public record BookingEvent(
         UUID correlationId,
         BigDecimal totalPrice,
         Instant createdAt) {
-    public record TicketInfo(String ticketType, int quantity, BigDecimal unitPrice) {}
 }

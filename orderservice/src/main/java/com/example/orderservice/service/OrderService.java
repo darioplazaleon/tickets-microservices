@@ -1,15 +1,16 @@
 package com.example.orderservice.service;
 
-import com.example.bookingservice.event.BookingEvent;
+
 import com.example.orderservice.entity.Order;
 import com.example.orderservice.entity.OrderStatus;
 import com.example.orderservice.entity.OrderTicket;
 import com.example.orderservice.repository.OrderRepository;
 import com.example.orderservice.request.PaymentSuccessRequest;
 import com.example.orderservice.response.OrderResponse;
+import com.example.shared.events.BookingCreatedEvent;
+import com.example.shared.records.TicketInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -23,18 +24,6 @@ import java.util.stream.Collectors;
 public class OrderService {
 
     private final OrderRepository orderRepository;
-
-    @KafkaListener(topics = "tickets.booking.created", groupId = "order-service")
-    public void orderEvent(BookingEvent bookingEvent) {
-        try {
-            log.info("Booking event received: {}", bookingEvent.bookingId());
-            createOrder(bookingEvent);
-            log.info("Order created by booking: {}", bookingEvent.bookingId());
-        } catch (Exception e) {
-            log.error("Error creating order for booking event: {}", bookingEvent.bookingId(), e);
-            throw new RuntimeException("Failed to create order", e);
-        }
-    }
 
     public OrderResponse getOrderById(UUID orderId) {
         Order order = orderRepository.findById(orderId)
@@ -78,10 +67,10 @@ public class OrderService {
     }
 
 
-    private void createOrder(BookingEvent bookingEvent) {
+    public void createOrder(BookingCreatedEvent bookingEvent) {
 
         int totalQuantity = bookingEvent.tickets().stream()
-                .mapToInt(BookingEvent.TicketInfo::quantity)
+                .mapToInt(TicketInfo::quantity)
                 .sum();
 
         Order order = Order.builder()

@@ -1,7 +1,8 @@
 package com.example.paymentservice.messaging.publisher;
 
-import com.example.paymentservice.event.outgoing.PaymentSucceededEvent;
 import com.example.paymentservice.response.OrderResponse;
+import com.example.shared.events.PaymentSucceededEvent;
+import com.example.shared.records.TicketInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -20,8 +21,8 @@ public class PaymentEventPublisher {
     private final KafkaTemplate<String, PaymentSucceededEvent> kafkaTemplate;
 
     public void emitPaymentSucceededEvent(OrderResponse order) {
-        List<PaymentSucceededEvent.TicketInfo> tickets = order.tickets().stream()
-                .map(t -> new PaymentSucceededEvent.TicketInfo(t.ticketType(), t.quantity(), t.unitPrice()))
+        List<TicketInfo> tickets = order.tickets().stream()
+                .map(t -> new TicketInfo(t.ticketType(), t.quantity(), t.unitPrice()))
                 .toList();
 
         PaymentSucceededEvent event = new PaymentSucceededEvent(

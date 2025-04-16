@@ -1,4 +1,6 @@
-package com.example.paymentservice.event.outgoing;
+package com.example.shared.events;
+
+import com.example.shared.records.TicketInfo;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -15,5 +17,4 @@ public record PaymentSucceededEvent(
         UUID correlationId,
         Instant paidAt
 ) {
-    public record TicketInfo(String ticketType, int quantity, BigDecimal unitPrice) {}
 }
