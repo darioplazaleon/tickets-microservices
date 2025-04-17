@@ -16,7 +16,7 @@ public class CustomerServiceClient {
 
     private final RestTemplate restTemplate;
 
-    @Value("${services.customer-service-url}")
+    @Value("${services.customer-service.url}")
     private String customerServiceUrl;
 
     public CustomerResponse getCustomer(UUID customerId) {

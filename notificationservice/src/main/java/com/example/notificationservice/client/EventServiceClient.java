@@ -12,7 +12,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class EventServiceClient {
 
-    @Value("${services.event-service-url}")
+    @Value("${services.event-service.url}")
     private String eventServiceUrl;
 
     private final RestTemplate restTemplate;

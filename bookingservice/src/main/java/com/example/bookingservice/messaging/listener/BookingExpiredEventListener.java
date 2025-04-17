@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class BookingEventListener {
+public class BookingExpiredEventListener {
 
     private final BookingRepository bookingRepository;
 

@@ -1,6 +1,6 @@
 package com.example.eventservice.messaging.listener;
 
-import com.example.eventservice.service.EventExpirationService;
+import com.example.eventservice.service.events.EventExpirationService;
 import com.example.shared.events.OrderExpiredEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

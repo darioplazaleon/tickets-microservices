@@ -1,4 +1,4 @@
-package com.example.eventservice.service;
+package com.example.eventservice.service.events;
 
 import com.example.eventservice.entity.Event;
 import com.example.eventservice.entity.TicketType;
