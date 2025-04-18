@@ -46,5 +46,11 @@ public class CustomerService {
     return new CustomerResponse(customer);
   }
 
+  public CustomerResponse getById(UUID customerId) {
+    Customer customer = customerRepository.findById(customerId)
+        .orElseThrow(() -> new RuntimeException("Customer not found"));
+    return new CustomerResponse(customer);
+  }
+
 
 }

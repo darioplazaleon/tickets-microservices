@@ -20,7 +20,7 @@ public class EventPaymentService {
                     .findByEventIdAndNameIgnoreCase(event.eventId(), ticket.ticketType())
                     .ifPresentOrElse(ticketType -> {
                         ticketType.setReserved(ticketType.getReserved() - ticket.quantity());
-                        ticketType.setSold(ticketType.getSold() - ticket.quantity());
+                        ticketType.setSold(ticketType.getSold() + ticket.quantity());
                         ticketTypeRepository.save(ticketType);
                         log.info("[Event Service] TicketType '{}' updated: reserved={}, sold={}",
                                 ticketType.getName(),

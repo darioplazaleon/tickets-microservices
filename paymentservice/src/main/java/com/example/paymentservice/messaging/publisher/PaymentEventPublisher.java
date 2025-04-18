@@ -37,7 +37,7 @@ public class PaymentEventPublisher {
         );
 
         ProducerRecord<String, PaymentSucceededEvent> record = new ProducerRecord<>(
-                "tickets.payment.succeeded", event
+                "tickets.payment.success", event
         );
         record.headers().add("user-id", order.customerId().toString().getBytes(StandardCharsets.UTF_8));
         record.headers().add("correlation-id", event.correlationId().toString().getBytes(StandardCharsets.UTF_8));

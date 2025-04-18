@@ -6,10 +6,9 @@ import com.example.bookingservice.service.CustomerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/customers")
@@ -22,5 +21,11 @@ public class CustomerController {
     public ResponseEntity<CustomerResponse> registerCustomer(@RequestBody UserRequest userRequest) {
         var customerResponse = customerService.registerCustomer(userRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(customerResponse);
+    }
+
+    @GetMapping("/{customerId}")
+    public ResponseEntity<CustomerResponse> getCustomerById(@PathVariable UUID customerId) {
+        var customerResponse = customerService.getById(customerId);
+        return ResponseEntity.ok(customerResponse);
     }
 }
