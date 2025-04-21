@@ -1,4 +1,4 @@
-package com.example.apigateway.route;
+package com.example.apigateway.route.eventservice;
 
 import com.example.apigateway.config.CustomHeaderFilter;
 import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions;
@@ -18,10 +18,14 @@ public class EventServiceRoutes {
         return GatewayRouterFunctions.route("event-service")
                 .route(RequestPredicates.GET("/api/v1/event/{eventId}"),
                         request -> forwardWithPathVariable(request, "eventId", "http://localhost:8080/api/v1/event/"))
-                .route(RequestPredicates.GET("/api/v1/venue/{venueId}"),
-                        request -> forwardWithPathVariable(request, "venueId", "http://localhost:8080/api/v1/venue/"))
+                .route(RequestPredicates.GET("/api/v1/events/all"),
+                        HandlerFunctions.http("http://localhost:8080/api/v1/events/all"))
                 .route(RequestPredicates.POST("/api/v1/events/create"),
                         HandlerFunctions.http("http://localhost:8080/api/v1/events/create"))
+                .route(RequestPredicates.PUT("/api/v1/events/update/{eventId}"),
+                        request -> forwardWithPathVariable(request, "eventId", "http://localhost:8080/api/v1/events/update/"))
+                .route(RequestPredicates.DELETE("/api/v1/events/delete/{eventId}"),
+                        request -> forwardWithPathVariable(request, "eventId", "http://localhost:8080/api/v1/events/delete/"))
                 .filter(CustomHeaderFilter.addCustomHeaders())
                 .build();
     }

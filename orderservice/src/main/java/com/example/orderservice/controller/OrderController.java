@@ -1,9 +1,8 @@
 package com.example.orderservice.controller;
 
-import com.example.orderservice.entity.Order;
-import com.example.orderservice.entity.OrderStatus;
 import com.example.orderservice.request.PaymentSuccessRequest;
 import com.example.orderservice.response.OrderResponse;
+import com.example.orderservice.response.OrderSummary;
 import com.example.orderservice.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -28,5 +27,11 @@ public class OrderController {
     public ResponseEntity<OrderResponse> getOrder(@PathVariable UUID id) {
         var order = orderService.getOrderById(id);
         return ResponseEntity.ok(order);
+    }
+
+    @GetMapping("/{orderId}/summary")
+    public ResponseEntity<OrderSummary> getOrderSummary(@PathVariable UUID orderId) {
+        orderService.getSummary(orderId);
+        return ResponseEntity.ok(orderService.getSummary(orderId));
     }
 }

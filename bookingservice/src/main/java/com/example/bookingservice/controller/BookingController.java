@@ -24,8 +24,7 @@ public class BookingController {
       @RequestHeader("X-Correlation-Id") UUID correlationId,
       @RequestBody BookingRequest request) {
     log.info(
-        "Booking request: {}, from user {} with correlationId {}", request, userId, correlationId);
-    System.out.println(userId);
+        "[Booking Service] Booking request: {}, from user {} with correlationId {}", request, userId, correlationId);
     var newBooking = bookingService.createBooking(userId, correlationId, request);
     return ResponseEntity.status(HttpStatus.CREATED).body(newBooking);
   }

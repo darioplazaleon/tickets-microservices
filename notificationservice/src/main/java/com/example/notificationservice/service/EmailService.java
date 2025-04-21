@@ -2,7 +2,9 @@ package com.example.notificationservice.service;
 
 import com.example.notificationservice.response.CustomerResponse;
 import com.example.notificationservice.response.EventDetailsResponse;
+import com.example.notificationservice.response.OrderSummary;
 import com.example.shared.events.PaymentSucceededEvent;
+import com.example.shared.events.TicketMasterQrEvent;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -23,17 +25,16 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    public void sendEmail(PaymentSucceededEvent event, EventDetailsResponse eventDetails, CustomerResponse customer, String qrCodeImage) throws MessagingException {
+    public void sendEmail(TicketMasterQrEvent event, EventDetailsResponse eventDetails, CustomerResponse customer, OrderSummary order) throws MessagingException {
 
-        byte[] qrImageBytes = Base64.getDecoder().decode(qrCodeImage);
+        byte[] qrImageBytes = Base64.getDecoder().decode(event.qrBase64());
         InputStreamSource imageSource = new ByteArrayResource(qrImageBytes);
 
-        // Crear un mensaje MIME
         String eventName = eventDetails.name();
         String venue = eventDetails.venueName() + " - " + eventDetails.venueAddress();
         String dateFormatted = eventDetails.startDate().format(DateTimeFormatter.ofPattern("EEEE dd/MM/yyyy - HH:mm").withLocale(Locale.forLanguageTag("es-AR")));
 
-        String ticketSummary = event.tickets().stream()
+        String ticketSummary = order.tickets().stream()
                 .map(t -> "<li>" + t.ticketType() + "x" + t.quantity() + "</li>")
                 .collect(Collectors.joining());
 
@@ -64,7 +65,7 @@ public class EmailService {
                 dateFormatted,
                 venue,
                 ticketSummary,
-                event.totalPrice()
+                order.totalPrice()
         );
 
         MimeMessage message = mailSender.createMimeMessage();

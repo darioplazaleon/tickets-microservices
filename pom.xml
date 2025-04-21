@@ -24,6 +24,7 @@
         <module>notificationservice</module>
         <module>orderservice</module>
         <module>paymentservice</module>
+        <module>ticketservice</module>
     </modules>
 
 </project>

@@ -14,7 +14,7 @@ import java.util.UUID;
 @RequestMapping("/api/v1/payment")
 public class PaymentController {
 
-    private PaymentService paymentService;
+    private final PaymentService paymentService;
 
     public PaymentController(PaymentService paymentService) {
         this.paymentService = paymentService;

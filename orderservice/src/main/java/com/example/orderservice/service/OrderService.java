@@ -7,6 +7,7 @@ import com.example.orderservice.entity.OrderTicket;
 import com.example.orderservice.repository.OrderRepository;
 import com.example.orderservice.request.PaymentSuccessRequest;
 import com.example.orderservice.response.OrderResponse;
+import com.example.orderservice.response.OrderSummary;
 import com.example.shared.events.BookingCreatedEvent;
 import com.example.shared.records.TicketInfo;
 import lombok.RequiredArgsConstructor;
@@ -96,5 +97,18 @@ public class OrderService {
         order.setTicketItems(ticketItems);
 
         orderRepository.save(order);
+    }
+
+    public OrderSummary getSummary(UUID orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        List<OrderSummary.TicketSummary> tickets = order.getTicketItems().stream()
+                .collect(Collectors.groupingBy(OrderTicket::getTicketType, Collectors.summingInt(OrderTicket::getQuantity)))
+                .entrySet().stream()
+                .map(e -> new OrderSummary.TicketSummary(e.getKey(), e.getValue()))
+                .toList();
+
+        return new OrderSummary(order.getTotalPrice(), tickets);
     }
 }

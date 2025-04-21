@@ -22,9 +22,9 @@ public class TagController {
     return ResponseEntity.ok(tags);
   }
 
-  @GetMapping("/{id}")
-  public ResponseEntity<TagResponse> getTagById(@PathVariable UUID id) {
-    TagResponse tag = tagService.findById(id);
+  @GetMapping("/{tagId}")
+  public ResponseEntity<TagResponse> getTagById(@PathVariable UUID tagId) {
+    TagResponse tag = tagService.findById(tagId);
     return ResponseEntity.ok(tag);
   }
 
@@ -34,16 +34,16 @@ public class TagController {
     return ResponseEntity.status(201).body(createdTag);
   }
 
-  @PutMapping("/update/{id}")
+  @PutMapping("/update/{tagId}")
   public ResponseEntity<TagResponse> updateTag(
-      @PathVariable UUID id, @RequestBody TagRequest tagRequest) {
-    TagResponse updatedTag = tagService.update(id, tagRequest);
+          @PathVariable UUID tagId, @RequestBody TagRequest tagRequest) {
+    TagResponse updatedTag = tagService.update(tagId, tagRequest);
     return ResponseEntity.ok(updatedTag);
   }
 
-  @DeleteMapping("/delete/{id}")
-  public ResponseEntity<Void> deleteTag(@PathVariable UUID id) {
-    tagService.delete(id);
+  @DeleteMapping("/delete/{tagId}")
+  public ResponseEntity<Void> deleteTag(@PathVariable UUID tagId) {
+    tagService.delete(tagId);
     return ResponseEntity.noContent().build();
   }
 }

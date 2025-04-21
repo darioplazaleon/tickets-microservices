@@ -26,6 +26,22 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, "/api/v1/events/all").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/events/{eventId}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/tags/all").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/tags/{tagId}").hasRole("admin_client_role")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/tags/create").hasRole("admin_client_role")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/tags/update/{tagId}").hasRole("admin_client_role")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/tags/delete/{tagId}").hasRole("admin_client_role")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/categories/all").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/categories/{categoryId}").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/categories/create").hasRole("admin_client_role")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/categories/update/{categoryId}").hasRole("admin_client_role")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/categories/delete/{categoryId}").hasRole("admin_client_role")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/events/create").hasRole("admin_client_role")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/events/update/{eventId}").hasRole("admin_client_role")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/events/delete/{eventId}").hasRole("admin_client_role")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payment/checkout/{orderId}").hasRole("user_client_role")
                         .requestMatchers(HttpMethod.POST, "/api/v1/bookings/create").hasRole("user_client_role")
                         .anyRequest().authenticated()
                 )
