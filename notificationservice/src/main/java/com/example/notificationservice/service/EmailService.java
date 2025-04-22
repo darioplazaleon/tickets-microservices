@@ -57,6 +57,7 @@ public class EmailService {
                      <img src='cid:qrCodeImage' alt='QR Code' />
                 
                      <hr>
+                     <p style='font-size: small;'>Una vez transferido alguno de los tickets el QR no puede ser utilizado.</p>
                      <p style='font-size: small;'>Este email fue generado automáticamente. No respondas a este mensaje.</p>
                  </body>
                  </html>

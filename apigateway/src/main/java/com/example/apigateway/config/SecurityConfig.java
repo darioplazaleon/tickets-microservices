@@ -43,6 +43,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/events/delete/{eventId}").hasRole("admin_client_role")
                         .requestMatchers(HttpMethod.POST, "/api/v1/payment/checkout/{orderId}").hasRole("user_client_role")
                         .requestMatchers(HttpMethod.POST, "/api/v1/bookings/create").hasRole("user_client_role")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/tickets/validate").hasRole("user_client_role")
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth -> {

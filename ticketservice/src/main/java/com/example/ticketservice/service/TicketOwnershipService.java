@@ -2,7 +2,6 @@ package com.example.ticketservice.service;
 
 import com.example.shared.events.PaymentSucceededEvent;
 import com.example.shared.events.TicketMasterQrEvent;
-import com.example.shared.events.TicketQrReadyEvent;
 import com.example.shared.records.TicketInfo;
 import com.example.ticketservice.entity.TicketOwnership;
 import com.example.ticketservice.messaging.publisher.TicketEventPublisher;
@@ -22,7 +21,6 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -41,7 +39,7 @@ public class TicketOwnershipService {
 
         for (TicketInfo info : event.tickets()) {
             for (int i = 0; i < info.quantity(); i++) {
-                TicketOwnership ticket  = TicketOwnership.builder()
+                TicketOwnership ticket = TicketOwnership.builder()
                         .orderId(orderId)
                         .eventId(eventId)
                         .originalBuyerId(ownerId)
@@ -176,4 +174,6 @@ public class TicketOwnershipService {
             throw new RuntimeException("Error generating QR", e);
         }
     }
+
+    
 }

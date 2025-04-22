@@ -91,4 +91,21 @@ public class QrGenerator {
             throw new RuntimeException("Error generating QR code", e);
         }
     }
+
+    public boolean isValid(QrPayload payload) {
+        String raw = "ticketId=%s&ownerId=%s&eventId=%s&timestamp=%s"
+                .formatted(payload.ticketId(), payload.ownerId(), payload.eventId(), payload.timestamp());
+
+        String expectedSignature = generateSignature(raw);
+
+        return expectedSignature.equals(payload.signature());
+    }
+
+    public boolean isValidMaster(QrMasterPayload payload) {
+        String ticketList = String.join(",", payload.ticketsIds().stream().map(UUID::toString).toList());
+        String raw = "orderId=%s&ownerId=%s&ticketIds=%s&timestamp=%s"
+                .formatted(payload.orderId(), payload.ownerId(), ticketList, payload.timestamp());
+        String expectedSignature = generateSignature(raw);
+        return expectedSignature.equals(payload.signature());
+    }
 }
