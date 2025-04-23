@@ -1,6 +1,7 @@
 package com.example.eventservice.controller;
 
 import com.example.eventservice.request.EventRequest;
+import com.example.eventservice.response.EventNotificationResponse;
 import com.example.eventservice.response.EventRecord;
 import com.example.eventservice.response.EventResponse;
 import com.example.eventservice.service.EventService;
@@ -55,4 +56,10 @@ public class EventController {
     eventService.updateEventCapacity(id, capacity);
     return ResponseEntity.ok().build();
   }
+
+  @GetMapping("/notification/{eventId}")
+    public ResponseEntity<EventNotificationResponse> getEventNotificationById(@PathVariable UUID eventId) {
+        EventNotificationResponse event = eventService.getEventNotificationById(eventId);
+        return ResponseEntity.ok(event);
+    }
 }

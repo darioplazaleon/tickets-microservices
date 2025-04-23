@@ -18,7 +18,7 @@ public class EventServiceClient {
     private final RestTemplate restTemplate;
 
     public EventDetailsResponse getEventDetails(UUID eventId) {
-        String url = eventServiceUrl + "/" + eventId;
+        String url = eventServiceUrl + "/notification/" + eventId;
 
         return restTemplate.getForObject(url, EventDetailsResponse.class);
     }

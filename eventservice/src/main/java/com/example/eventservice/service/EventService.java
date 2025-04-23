@@ -7,6 +7,7 @@ import com.example.eventservice.repository.TicketTypeRepository;
 import com.example.eventservice.repository.VenueRepository;
 import com.example.eventservice.request.EventRequest;
 import com.example.eventservice.request.ReserveTicketRequest;
+import com.example.eventservice.response.EventNotificationResponse;
 import com.example.eventservice.response.EventRecord;
 import com.example.eventservice.response.EventResponse;
 import com.example.eventservice.response.ReserveTicketResponse;
@@ -43,6 +44,20 @@ public class EventService {
             .orElseThrow(() -> new EntityNotFoundException("Event not found"));
 
     return new EventRecord(event);
+  }
+
+  public EventNotificationResponse getEventNotificationById(UUID eventId) {
+    Event event =
+        eventRepository
+            .findById(eventId)
+            .orElseThrow(() -> new EntityNotFoundException("Event not found"));
+
+    return new EventNotificationResponse(
+        event.getId(),
+        event.getName(),
+        event.getStartDate(),
+        event.getVenue().getName(),
+        event.getVenue().getAddress());
   }
 
   public Page<EventResponse> getAllEvents(Pageable pageable) {

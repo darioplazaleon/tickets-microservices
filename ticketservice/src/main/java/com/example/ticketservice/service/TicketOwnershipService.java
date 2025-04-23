@@ -2,9 +2,11 @@ package com.example.ticketservice.service;
 
 import com.example.shared.events.PaymentSucceededEvent;
 import com.example.shared.events.TicketMasterQrEvent;
+import com.example.shared.events.TicketQrReadyEvent;
 import com.example.shared.records.TicketInfo;
 import com.example.ticketservice.entity.TicketOwnership;
 import com.example.ticketservice.messaging.publisher.TicketEventPublisher;
+import com.example.ticketservice.messaging.publisher.TicketTransferEventPublisher;
 import com.example.ticketservice.repository.TicketOwnershipRepository;
 import com.example.ticketservice.request.QrMasterPayload;
 import com.example.ticketservice.response.TicketResponse;
@@ -30,6 +32,7 @@ public class TicketOwnershipService {
     private final TicketOwnershipRepository ticketOwnershipRepository;
     private final QrGenerator qrGenerator;
     private final TicketEventPublisher ticketEventPublisher;
+    private final TicketTransferEventPublisher ticketTransferEventPublisher;
 
     public void processPayment(PaymentSucceededEvent event) {
         log.info("[Ticket Service] Processing payment for order {}", event.orderId());
@@ -148,6 +151,20 @@ public class TicketOwnershipService {
         ticket.setTransferredAt(Instant.now());
 
         ticketOwnershipRepository.save(ticket);
+
+        String qrTransfer = generateQr(ticketId, toUserId);
+
+        TicketQrReadyEvent transferEvent = new TicketQrReadyEvent(
+                ticket.getId(),
+                ticket.getOrderId(),
+                ticket.getEventId(),
+                fromUserId,
+                toUserId,
+                qrTransfer,
+                Instant.now()
+        );
+
+        ticketTransferEventPublisher.publishTransferTicketEvent(transferEvent);
 
         log.info("[Ticket Service] Ticket {} transferred from user {} to user {}",
                 ticketId, fromUserId, toUserId);

@@ -1,10 +1,10 @@
-package com.example.notificationservice.response;
+package com.example.eventservice.response;
 
-import java.time.LocalDate;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public record EventDetailsResponse (
+public record EventNotificationResponse (
     UUID id,
     String event,
     LocalDateTime startDate,
@@ -12,5 +12,3 @@ public record EventDetailsResponse (
     String venueAddress
 ) {
 }
-
-

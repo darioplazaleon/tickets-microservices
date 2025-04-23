@@ -1,10 +1,12 @@
 package com.example.ticketservice.controller;
 
+import com.example.shared.data.TicketData;
 import com.example.ticketservice.request.TicketValidationRequest;
 import com.example.ticketservice.request.TransferRequest;
 import com.example.ticketservice.response.TicketResponse;
 import com.example.ticketservice.response.TicketValidationResponse;
 import com.example.ticketservice.service.TicketOwnershipService;
+import com.example.ticketservice.service.TicketService;
 import com.example.ticketservice.service.TicketValidationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +22,10 @@ public class TicketOwnershipController {
 
     private final TicketOwnershipService ticketOwnershipService;
     private final TicketValidationService ticketValidationService;
+    private final TicketService ticketService;
 
     @GetMapping("/mine")
-    public ResponseEntity<List<TicketResponse>> getMyTickets(@RequestHeader("X-User-Id")UUID userId) {
+    public ResponseEntity<List<TicketResponse>> getMyTickets(@RequestHeader("X-User-Id") UUID userId) {
         List<TicketResponse> tickets = ticketOwnershipService.getTicketsForUser(userId);
         return ResponseEntity.ok(tickets);
     }
@@ -33,7 +36,10 @@ public class TicketOwnershipController {
             @PathVariable UUID ticketId,
             @RequestBody TransferRequest transferRequest
     ) {
-        ticketOwnershipService.transferTicket(userId, ticketId, transferRequest.newOwnerId());
+        System.out.println(ticketId);
+        System.out.println(userId);
+        System.out.println(transferRequest);
+        ticketOwnershipService.transferTicket(ticketId, userId, transferRequest.newOwnerId());
         return ResponseEntity.ok().build();
     }
 
@@ -48,10 +54,15 @@ public class TicketOwnershipController {
             json = qrInput;
         }
 
-
-
         TicketValidationResponse response = ticketValidationService.validateQrPayload(json);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/data/{ticketId}")
+    public ResponseEntity<TicketData> getTicketById(@PathVariable UUID ticketId) {
+        TicketData ticket = ticketService.getTicketById(ticketId);
+        return ResponseEntity.ok(ticket);
+    }
+
 
 }

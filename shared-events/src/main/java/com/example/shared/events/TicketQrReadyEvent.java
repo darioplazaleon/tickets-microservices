@@ -7,8 +7,9 @@ public record TicketQrReadyEvent(
         UUID ticketId,
         UUID orderId,
         UUID eventId,
-        UUID ownerId,
+        UUID originalBuyerId,
+        UUID currentOwnerId,
         String qrBase64,
-        Instant createdAt
+        Instant transferredAt
 ) {
 }
