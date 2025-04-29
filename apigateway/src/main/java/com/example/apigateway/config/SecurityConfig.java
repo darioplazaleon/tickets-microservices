@@ -19,6 +19,9 @@ public class SecurityConfig {
     @Value("${keycloak.auth-server-uri}")
     private String jwtSetUri;
 
+    @Value("${security.excluded.urls}")
+    private String[] excludedUrls;
+
     @Autowired
     private JwtAuthenticationConverter jwtConverter;
 
@@ -44,6 +47,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/payment/checkout/{orderId}").hasRole("user_client_role")
                         .requestMatchers(HttpMethod.POST, "/api/v1/bookings/create").hasRole("user_client_role")
                         .requestMatchers(HttpMethod.POST, "/api/v1/tickets/validate").hasRole("user_client_role")
+                        .requestMatchers(excludedUrls).permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth -> {

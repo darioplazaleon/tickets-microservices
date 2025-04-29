@@ -12,16 +12,12 @@ import java.util.UUID;
 public record EventResponse(
     UUID id,
     String event,
-    int capacity,
-    List<TicketType> ticketTypes,
     Category category,
     List<Tag> tags) {
   public EventResponse(Event event) {
     this(
         event.getId(),
         event.getName(),
-        event.getTotalCapacity(),
-        event.getTicketTypes(),
         event.getCategory(),
         event.getTags());
   }

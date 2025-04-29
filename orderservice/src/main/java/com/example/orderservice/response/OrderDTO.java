@@ -1,19 +1,18 @@
 package com.example.orderservice.response;
 
+import com.example.orderservice.entity.OrderStatus;
+
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-public record OrderResponse(
-        UUID orderId,
-        UUID bookingId,
+public record OrderDTO(
+        UUID id,
         UUID customerId,
         UUID eventId,
+        UUID bookingId,
+        OrderStatus status,
         BigDecimal totalPrice,
-        String status,
-        Instant expiresAt,
-        UUID correlationId,
         List<TicketItem> tickets
 ) {
     public record TicketItem(

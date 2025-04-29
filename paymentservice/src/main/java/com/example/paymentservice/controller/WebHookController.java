@@ -7,19 +7,16 @@ import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.StripeObject;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-@Slf4j
 @RestController
+@RequestMapping("/api/v1/payments")
 @RequiredArgsConstructor
+@Slf4j
 public class WebHookController {
 
     private final PaymentService paymentService;
@@ -28,13 +25,16 @@ public class WebHookController {
     private String webhookSecret;
 
     @PostMapping("/webhook")
-    public ResponseEntity<String> handleWebHook(@RequestHeader("Stripe-Signature") String signature, @RequestBody String payload) {
+    public ResponseEntity<String> handleWebHook(
+            @RequestHeader("Stripe-Signature") String signature,
+            @RequestBody String payload) {
+
         log.info("Received webhook request");
 
         Event event;
         try {
             event = Webhook.constructEvent(payload, signature, webhookSecret);
-        } catch ( SignatureVerificationException e) {
+        } catch (SignatureVerificationException e) {
             log.warn("Signature verification failed in webhook: {}", e.getMessage());
             return ResponseEntity.status(400).body("Invalid signature");
         }
@@ -57,11 +57,11 @@ public class WebHookController {
                 break;
 
             case "payment_intent.payment_failed":
-                System.out.println("Payment failed");
+                log.warn("Payment failed");
                 break;
 
             default:
-                System.out.println("Unhandled event type: " + event.getType());
+                log.info("Unhandled event type: {}", event.getType());
         }
 
         return ResponseEntity.ok("Webhook handled");

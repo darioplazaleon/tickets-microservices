@@ -5,7 +5,6 @@ import com.example.eventservice.response.EventNotificationResponse;
 import com.example.eventservice.response.EventRecord;
 import com.example.eventservice.response.EventResponse;
 import com.example.eventservice.service.EventService;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,53 +12,49 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/v1/events")
 @RequiredArgsConstructor
 public class EventController {
 
-  private final EventService eventService;
+    private final EventService eventService;
 
-  @GetMapping("/all")
-  public Page<EventResponse> getAllEvents(Pageable pageable) {
-    return eventService.getAllEvents(pageable);
-  }
+    @GetMapping("/all")
+    public Page<EventResponse> getAllEvents(Pageable pageable) {
+        return eventService.getAllEvents(pageable);
+    }
 
-  @GetMapping("/{eventId}")
-  public @ResponseBody EventRecord getEventById(@PathVariable UUID eventId) {
-    return eventService.getEventById(eventId);
-  }
+    @GetMapping("/{eventId}")
+    public ResponseEntity<EventRecord> getEventById(
+            @PathVariable UUID eventId) {
+        return ResponseEntity.ok(eventService.getEventById(eventId));
+    }
 
-  @PostMapping("/create")
-  public ResponseEntity<EventRecord> createEvent(@RequestBody EventRequest newEvent, @RequestHeader("X-User-ID") UUID createdByUserId) {
-    System.out.println(createdByUserId);
-    EventRecord event = eventService.createEvent(newEvent, createdByUserId);
-    return ResponseEntity.status(HttpStatus.CREATED).body(event);
-  }
+    @PostMapping("/create")
+    public ResponseEntity<EventRecord> createEvent(
+            @RequestBody EventRequest newEvent,
+            @RequestHeader("X-User-ID") UUID createdByUserId) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(eventService.createEvent(newEvent, createdByUserId));
+    }
 
-  @PutMapping("/update/{eventId}")
-  public ResponseEntity<EventResponse> updateEvent(
-      @PathVariable UUID eventId, @RequestBody EventRequest updatedEvent) {
-    EventResponse event = eventService.updateEvent(eventId, updatedEvent);
-    return ResponseEntity.ok(event);
-  }
+    @PutMapping("/update/{eventId}")
+    public ResponseEntity<EventResponse> updateEvent(
+            @PathVariable UUID eventId,
+            @RequestBody EventRequest updatedEvent) {
+        return ResponseEntity.ok(eventService.updateEvent(eventId, updatedEvent));
+    }
 
-  @DeleteMapping("/delete/{eventId}")
-  public ResponseEntity<Void> deleteEvent(@PathVariable UUID eventId) {
-    eventService.deleteEvent(eventId);
-    return ResponseEntity.noContent().build();
-  }
+    @DeleteMapping("/delete/{eventId}")
+    public ResponseEntity<Void> deleteEvent(@PathVariable UUID eventId) {
+        eventService.deleteEvent(eventId);
+        return ResponseEntity.noContent().build();
+    }
 
-  @PutMapping("/{id}/capacity/{capacity}")
-  public ResponseEntity<Void> updateEventCapacity(
-      @PathVariable UUID id, @PathVariable Long capacity) {
-    eventService.updateEventCapacity(id, capacity);
-    return ResponseEntity.ok().build();
-  }
-
-  @GetMapping("/notification/{eventId}")
-    public ResponseEntity<EventNotificationResponse> getEventNotificationById(@PathVariable UUID eventId) {
-        EventNotificationResponse event = eventService.getEventNotificationById(eventId);
-        return ResponseEntity.ok(event);
+    @GetMapping("/notification/{eventId}")
+    public ResponseEntity<EventNotificationResponse> getEventNotificationById(
+            @PathVariable UUID eventId) {
+        return ResponseEntity.ok(eventService.getEventNotificationById(eventId));
     }
 }

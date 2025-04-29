@@ -1,6 +1,7 @@
 package com.example.bookingservice.controller;
 
 import com.example.bookingservice.request.UserRequest;
+import com.example.bookingservice.response.CustomerDetails;
 import com.example.bookingservice.response.CustomerResponse;
 import com.example.bookingservice.service.CustomerService;
 import lombok.RequiredArgsConstructor;
@@ -18,14 +19,25 @@ public class CustomerController {
     private final CustomerService customerService;
 
     @PostMapping("/register")
-    public ResponseEntity<CustomerResponse> registerCustomer(@RequestBody UserRequest userRequest) {
+    public ResponseEntity<CustomerResponse> registerCustomer(
+            @RequestBody
+            UserRequest userRequest) {
         var customerResponse = customerService.registerCustomer(userRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(customerResponse);
     }
 
     @GetMapping("/{customerId}")
-    public ResponseEntity<CustomerResponse> getCustomerById(@PathVariable UUID customerId) {
+    public ResponseEntity<CustomerResponse> getCustomerById(
+            @PathVariable
+            UUID customerId) {
         var customerResponse = customerService.getById(customerId);
         return ResponseEntity.ok(customerResponse);
+    }
+
+    @GetMapping("/my-details")
+    public ResponseEntity<CustomerDetails> getCustomerDetails(
+            @RequestHeader("X-User-Id") UUID customerId) {
+        var customerDetails = customerService.geyCustomerDetails(customerId);
+        return ResponseEntity.ok(customerDetails);
     }
 }

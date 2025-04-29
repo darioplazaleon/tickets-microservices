@@ -4,6 +4,7 @@ import com.example.bookingservice.client.KeycloakAdminClient;
 import com.example.bookingservice.entity.Customer;
 import com.example.bookingservice.repository.CustomerRepository;
 import com.example.bookingservice.request.UserRequest;
+import com.example.bookingservice.response.CustomerDetails;
 import com.example.bookingservice.response.CustomerResponse;
 import jakarta.persistence.EntityExistsException;
 import java.time.LocalDate;
@@ -52,5 +53,14 @@ public class CustomerService {
     return new CustomerResponse(customer);
   }
 
+  public CustomerDetails geyCustomerDetails(UUID customerId) {
+    Customer customer = customerRepository.findById(customerId)
+        .orElseThrow(() -> new RuntimeException("Customer not found"));
 
+    if (!customer.getId().equals(customerId)) {
+        throw new RuntimeException("Access denied");
+    }
+
+    return new CustomerDetails(customer);
+  }
 }

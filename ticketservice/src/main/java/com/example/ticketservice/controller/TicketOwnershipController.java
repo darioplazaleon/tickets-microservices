@@ -25,26 +25,26 @@ public class TicketOwnershipController {
     private final TicketService ticketService;
 
     @GetMapping("/mine")
-    public ResponseEntity<List<TicketResponse>> getMyTickets(@RequestHeader("X-User-Id") UUID userId) {
+    public ResponseEntity<List<TicketResponse>> getMyTickets(
+            @RequestHeader("X-User-Id") UUID userId) {
         List<TicketResponse> tickets = ticketOwnershipService.getTicketsForUser(userId);
         return ResponseEntity.ok(tickets);
     }
+
 
     @PostMapping("/transfer/{ticketId}")
     public ResponseEntity<Void> transferTicket(
             @RequestHeader("X-User-Id") UUID userId,
             @PathVariable UUID ticketId,
-            @RequestBody TransferRequest transferRequest
-    ) {
-        System.out.println(ticketId);
-        System.out.println(userId);
-        System.out.println(transferRequest);
+            @RequestBody TransferRequest transferRequest) {
         ticketOwnershipService.transferTicket(ticketId, userId, transferRequest.newOwnerId());
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/validate")
-    public ResponseEntity<TicketValidationResponse> validateQr(@RequestBody TicketValidationRequest request) {
+    public ResponseEntity<TicketValidationResponse> validateQr(
+            @RequestBody TicketValidationRequest request) {
+
         String qrInput = request.qr();
         String json;
 
@@ -59,10 +59,9 @@ public class TicketOwnershipController {
     }
 
     @GetMapping("/data/{ticketId}")
-    public ResponseEntity<TicketData> getTicketById(@PathVariable UUID ticketId) {
+    public ResponseEntity<TicketData> getTicketById(
+            @PathVariable UUID ticketId) {
         TicketData ticket = ticketService.getTicketById(ticketId);
         return ResponseEntity.ok(ticket);
     }
-
-
 }

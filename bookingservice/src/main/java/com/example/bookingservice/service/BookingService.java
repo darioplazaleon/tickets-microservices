@@ -11,12 +11,15 @@ import com.example.bookingservice.repository.CustomerRepository;
 import com.example.bookingservice.request.BookingRequest;
 import com.example.bookingservice.request.TicketRequest;
 import com.example.bookingservice.response.BookingResponse;
+import com.example.bookingservice.response.BookingSimple;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -86,6 +89,37 @@ public class BookingService {
         .customerId(booking.getCustomerId())
         .eventId(booking.getEventId())
         .totalPrice(totalPrice)
+        .build();
+  }
+
+  public Page<BookingSimple> getCustomerBookings(UUID customerId, Pageable pageable) {
+    Page<Booking> bookings = bookingRepository.findByCustomerId(customerId, pageable);
+    return bookings.map(
+        booking ->
+            BookingSimple.builder()
+                .id(booking.getId())
+                .eventId(booking.getEventId())
+                .status(booking.getStatus())
+                .createdAt(booking.getCreatedAt())
+                .build());
+  }
+
+  public BookingResponse getCustomerBookingById(UUID customerId, UUID bookingId) {
+    Booking booking = bookingRepository.findById(bookingId).orElseThrow();
+    if (!booking.getCustomerId().equals(customerId)) {
+      throw new RuntimeException("Booking not found");
+    }
+    return BookingResponse.builder()
+        .bookingId(booking.getId())
+        .customerId(booking.getCustomerId())
+        .eventId(booking.getEventId())
+        .totalPrice(booking.getTotalPrice())
+        .tickets(booking.getTickets().stream()
+            .map(ticket -> TicketRequest.builder()
+                .ticketType(ticket.getTicketType())
+                .quantity(ticket.getQuantity())
+                .build())
+            .toList())
         .build();
   }
 }

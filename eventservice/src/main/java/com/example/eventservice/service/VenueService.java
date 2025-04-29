@@ -4,8 +4,11 @@ import com.example.eventservice.entity.Venue;
 import com.example.eventservice.repository.VenueRepository;
 import com.example.eventservice.request.LocationAddRequest;
 import com.example.eventservice.response.LocationResponse;
+import com.example.eventservice.response.VenueSimple;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
+
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,14 +32,20 @@ public class VenueService {
     return venueRepository.findAll(pageable).map(LocationResponse::new);
   }
 
+  public List<VenueSimple> getAllVenuesSimple() {
+    return venueRepository.findAll().stream()
+        .map(venue -> new VenueSimple(venue.getId(), venue.getName()))
+        .toList();
+  }
+
   public LocationResponse createVenue(LocationAddRequest newLocationRequest) {
-    if (venueRepository.findByName(newLocationRequest.venueName()).isPresent()) {
+    if (venueRepository.findByName(newLocationRequest.name()).isPresent()) {
       throw new EntityExistsException("Venue with this name already exists");
     }
 
     var venue =
         Venue.builder()
-            .name(newLocationRequest.venueName())
+            .name(newLocationRequest.name())
             .city(newLocationRequest.city())
             .totalCapacity(newLocationRequest.totalCapacity())
             .address(newLocationRequest.address())
@@ -53,12 +62,12 @@ public class VenueService {
             .findById(venueId)
             .orElseThrow(() -> new EntityNotFoundException("Venue not found"));
 
-    if (!venue.getName().equals(newLocationRequest.venueName()) &&
-            venueRepository.findByName(newLocationRequest.venueName()).isPresent()) {
+    if (!venue.getName().equals(newLocationRequest.name()) &&
+            venueRepository.findByName(newLocationRequest.name()).isPresent()) {
       throw new EntityExistsException("Venue with this name already exists");
     }
 
-    venue.setName(newLocationRequest.venueName());
+    venue.setName(newLocationRequest.name());
     venue.setCity(newLocationRequest.city());
     venue.setTotalCapacity(newLocationRequest.totalCapacity());
     venue.setAddress(newLocationRequest.address());

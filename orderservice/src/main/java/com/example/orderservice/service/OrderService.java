@@ -6,12 +6,16 @@ import com.example.orderservice.entity.OrderStatus;
 import com.example.orderservice.entity.OrderTicket;
 import com.example.orderservice.repository.OrderRepository;
 import com.example.orderservice.request.PaymentSuccessRequest;
+import com.example.orderservice.response.OrderDTO;
 import com.example.orderservice.response.OrderResponse;
+import com.example.orderservice.response.OrderSimple;
 import com.example.orderservice.response.OrderSummary;
 import com.example.shared.events.BookingCreatedEvent;
 import com.example.shared.records.TicketInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -31,6 +35,50 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
         return createOrderResponse(order);
+    }
+
+    public OrderSummary getSummary(UUID orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        List<OrderSummary.TicketSummary> tickets = order.getTicketItems().stream()
+                .collect(Collectors.groupingBy(OrderTicket::getTicketType, Collectors.summingInt(OrderTicket::getQuantity)))
+                .entrySet().stream()
+                .map(e -> new OrderSummary.TicketSummary(e.getKey(), e.getValue()))
+                .toList();
+
+        return new OrderSummary(order.getTotalPrice(), tickets);
+    }
+
+    public Page<OrderSimple> getOrdersByCustomerId(UUID customerId, Pageable pageable) {
+        return orderRepository.findAllByCustomerId(customerId, pageable);
+    }
+
+    public OrderDTO getCustomerOrderById(UUID orderId, UUID customerId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (!order.getCustomerId().equals(customerId)) {
+            throw new RuntimeException("This order does not belong to the customer");
+        }
+
+        List<OrderDTO.TicketItem> items = order.getTicketItems().stream()
+                .map(t -> new OrderDTO.TicketItem(
+                        t.getTicketType(),
+                        t.getQuantity(),
+                        t.getUnitPrice()
+                ))
+                .toList();
+
+        return new OrderDTO(
+                order.getId(),
+                order.getCustomerId(),
+                order.getEventId(),
+                order.getBookingId(),
+                order.getStatus(),
+                order.getTotalPrice(),
+                items
+        );
     }
 
     private OrderResponse createOrderResponse(Order order) {
@@ -54,19 +102,6 @@ public class OrderService {
                 items
         );
     }
-
-    public void updateSuccessOrder(UUID orderId, PaymentSuccessRequest paymentInfo) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        order.setStatus(paymentInfo.status());
-        order.setPaymentIntentId(paymentInfo.paymentIntentId());
-        order.setPaidAt(Instant.now());
-
-        orderRepository.save(order);
-        log.info("Order status updated: {} to {}", orderId, paymentInfo.status());
-    }
-
 
     public void createOrder(BookingCreatedEvent bookingEvent) {
 
@@ -97,18 +132,5 @@ public class OrderService {
         order.setTicketItems(ticketItems);
 
         orderRepository.save(order);
-    }
-
-    public OrderSummary getSummary(UUID orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        List<OrderSummary.TicketSummary> tickets = order.getTicketItems().stream()
-                .collect(Collectors.groupingBy(OrderTicket::getTicketType, Collectors.summingInt(OrderTicket::getQuantity)))
-                .entrySet().stream()
-                .map(e -> new OrderSummary.TicketSummary(e.getKey(), e.getValue()))
-                .toList();
-
-        return new OrderSummary(order.getTotalPrice(), tickets);
     }
 }

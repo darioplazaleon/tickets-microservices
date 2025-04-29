@@ -141,13 +141,4 @@ public class EventService {
     eventRepository.delete(event);
     log.info("Deleted event with id: {}", id);
   }
-
-  public void updateEventCapacity(UUID id, Long capacity) {
-    Event event =
-        eventRepository.findById(id).orElseThrow(() -> new RuntimeException("Event not found"));
-    eventRepository.saveAndFlush(event);
-    log.info("Updated event capacity for event id: {} with tickets booked: {}", id, capacity);
-  }
-
-
 }

@@ -54,7 +54,7 @@ public class TracingHeadersFilter extends OncePerRequestFilter {
 
     private String extractUserIdFromToken(HttpServletRequest request) {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (authHeader == null && authHeader.startsWith("Bearer ")) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
             try {
                 String token = authHeader.substring(7);
                 DecodedJWT decodedJWT = JWT.decode(token);

@@ -10,6 +10,8 @@ import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import static org.springframework.cloud.gateway.server.mvc.filter.FilterFunctions.setPath;
+
 @Configuration
 public class EventServiceRoutes {
 
@@ -33,5 +35,14 @@ public class EventServiceRoutes {
     private static ServerResponse forwardWithPathVariable(ServerRequest request, String pathVariable, String baseURl) throws Exception {
         String value = request.pathVariable(pathVariable);
         return HandlerFunctions.http(baseURl + value).handle(request);
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> eventServiceApiDocs() {
+        return GatewayRouterFunctions.route("event-service-api-docs")
+                .route(RequestPredicates.path("/docs/eventservice/v3/api-docs"),
+                        HandlerFunctions.http("http://localhost:8080"))
+                .filter(setPath("/v3/api-docs"))
+                .build();
     }
 }
