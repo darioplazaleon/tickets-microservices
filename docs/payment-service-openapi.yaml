@@ -1,0 +1,155 @@
+openapi: 3.1.0
+info:
+  title: OpenAPI definition
+  description: |
+    This service manages Stripe payment sessions, payment confirmation, and webhook handling.
+                                                
+    It exposes endpoints for initiating customer checkout flows and receiving payment event notifications. 
+  version: 1.0.0
+servers:
+- url: http://localhost:8087
+  description: Generated server url
+tags:
+- name: Payments
+  description: 💳 Operations related to payment sessions and processing
+- name: Webhooks
+  description: 📬 Stripe webhook event handling
+paths:
+  /api/v1/payments/webhook:
+    post:
+      tags:
+      - Webhooks
+      summary: Handle Stripe webhook events
+      description: |
+        📬 **No authentication required**
+
+        This endpoint is called by Stripe when payment-related events occur.
+
+        Events like `checkout.session.completed` and `payment_intent.payment_failed` are processed here.
+      operationId: handleWebHook
+      parameters:
+      - name: Stripe-Signature
+        in: header
+        description: Stripe signature header
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              description: Raw webhook payload
+        required: true
+      responses:
+        "200":
+          description: Webhook received and processed successfully
+          content:
+            text/plain:
+              example: Webhook handled
+  /api/v1/payments/checkout/{orderId}:
+    post:
+      tags:
+      - Payments
+      summary: Create Stripe Checkout session
+      description: |
+        **Requires role**: `user_client_role`
+
+        Initiates the payment process by creating a Stripe Checkout session for the specified order ID.
+      operationId: checkoutOrder
+      parameters:
+      - name: orderId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Stripe checkout session created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StripeResponse"
+              example:
+                checkoutUrl: https://checkout.stripe.com/pay/cs_test_abc1234567890
+      security:
+      - bearerAuth: []
+components:
+  schemas:
+    StripeResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+        sessionId:
+          type: string
+        sessionUrl:
+          type: string
+x-topics:
+- title: Authentication
+  content: |
+    This API uses Bearer Token (JWT) authentication.
+
+    You can obtain a token from Keycloak:
+
+    ```plaintext
+    https://localhost:8080/realms/tickets/protocol/openid-connect/token
+    ```
+
+    _(Replace `8080` and `tickets` with your actual Keycloak port and realm if needed.)_
+
+    Include the token in the `Authorization` header:
+    ```bash
+    Authorization: Bearer <your-jwt-token>
+    ```
+
+    Most endpoints require a valid JWT token.
+
+- title: Authorization and Roles
+  content: |
+    This API uses role-based access control (RBAC) managed through Keycloak.
+
+    Roles are assigned to users in Keycloak and included in the JWT token inside the `realm_access.roles` claim.
+
+    The main roles used are:
+
+    - `admin_client_role`
+    - `user_client_role`
+
+    Access to specific endpoints is restricted based on these roles.
+
+    Example of `realm_access` section in a JWT:
+    ```json
+    {
+      "realm_access": {
+        "roles": [
+          "admin_client_role",
+          "user_client_role"
+        ]
+      }
+    }
+    ```
+
+    If a user tries to access an endpoint without the required role, a `403 Forbidden` error is returned.
+
+- title: X-User-Id and X-Correlation-Id
+  content: |
+    Certain headers are automatically injected by the API Gateway after validating the user's JWT token.
+
+    These headers are:
+
+    - `X-User-Id`: Contains the authenticated user's ID (UUID).
+    - `X-Correlation-Id`: A unique ID used to trace requests across multiple services.
+
+    You do **not** need to manually set these headers when making requests through the API Gateway.
+
+    If a `X-Correlation-Id` is not present in the incoming request, the API Gateway will automatically generate a new one.
+
+    Example of automatically injected headers:
+    ```
+    X-User-Id: 1fee4567-e89b-12d3-a456-426614174000
+    X-Correlation-Id: f47ac10b-58cc-4372-a567-0e02b2c3d479
+    ```

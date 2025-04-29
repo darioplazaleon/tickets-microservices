@@ -1,0 +1,268 @@
+openapi: 3.1.0
+info:
+  title: Ticket Service API
+  description: |
+    This service manages ticket ownership, validation, transfer, and provides ticket data for other microservices.
+
+    It exposes endpoints for users to view and transfer their tickets, validate QR codes, and allows internal services to fetch ticket information.
+  contact:
+    name: Dario A. Plaza Leon
+    url: https://plazaleon.tech
+    email: contact@plazaleon.tech
+  version: 1.0.0
+servers:
+- url: http://localhost:8086
+  description: Generated server url
+tags:
+- name: Tickets
+  description: "🎟️ Operations related to ticket ownership, validation, and transfer"
+paths:
+  /api/v1/tickets/validate:
+    post:
+      tags:
+      - Tickets
+      summary: Validate a QR code
+      description: |
+        **Requires role**: `admin_client_role`
+
+        Validate a ticket's QR code payload to verify if the ticket is valid and unused.
+      operationId: validateQr
+      requestBody:
+        description: QR code payload to validate
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TicketValidationRequest"
+            example:
+              qr: Base64EncodedQRCodePayload
+        required: true
+      responses:
+        "200":
+          description: Ticket validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketValidationResponse"
+              example:
+                status: accepted
+                message: Ticket is valid and accepted.
+  /api/v1/tickets/transfer/{ticketId}:
+    post:
+      tags:
+      - Tickets
+      summary: Transfer a ticket to another user
+      description: |
+        **Requires role**: `user_client_role`
+
+        Transfer ownership of a ticket to another user.
+      operationId: transferTicket
+      parameters:
+      - name: X-User-Id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: ticketId
+        in: path
+        description: Ticket ID to transfer
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        description: New owner ID
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferRequest"
+            example:
+              newOwnerId: 323e4567-e89b-12d3-a456-426614174000
+        required: true
+      responses:
+        "200":
+          description: OK
+      security:
+      - bearerAuth: []
+  /api/v1/tickets/mine:
+    get:
+      tags:
+      - Tickets
+      summary: Get my tickets
+      description: |
+        **Requires role**: `user_client_role`
+
+        Retrieve a list of all tickets owned by the authenticated user.
+      operationId: getMyTickets
+      parameters:
+      - name: X-User-Id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: User's tickets retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketResponse"
+              example:
+              - ticketId: 123e4567-e89b-12d3-a456-426614174000
+                eventId: 223e4567-e89b-12d3-a456-426614174000
+                ticketType: VIP
+                used: false
+                transferable: true
+                qrCodeBase64: Base64EncodedStringHere
+      security:
+      - bearerAuth: []
+  /api/v1/tickets/data/{ticketId}:
+    get:
+      tags:
+      - Tickets
+      summary: Get ticket data by ID
+      description: |
+        🔧 **Internal use only**
+
+        Retrieve basic ticket information using its unique identifier.
+
+        Intended for internal services like `notification-service`.
+      operationId: getTicketById
+      parameters:
+      - name: ticketId
+        in: path
+        description: Ticket ID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Ticket data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketData"
+              example:
+                id: 123e4567-e89b-12d3-a456-426614174000
+                eventId: 223e4567-e89b-12d3-a456-426614174000
+                ticketType: VIP
+components:
+  schemas:
+    TicketValidationRequest:
+      type: object
+      properties:
+        qr:
+          type: string
+    TicketValidationResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+    TransferRequest:
+      type: object
+      properties:
+        newOwnerId:
+          type: string
+          format: uuid
+    TicketResponse:
+      type: object
+      properties:
+        ticketId:
+          type: string
+          format: uuid
+        eventId:
+          type: string
+          format: uuid
+        ticketType:
+          type: string
+        used:
+          type: boolean
+        transferable:
+          type: boolean
+        qrCodeBase64:
+          type: string
+    TicketData:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventId:
+          type: string
+          format: uuid
+        ticketType:
+          type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+x-topics:
+- title: Authentication
+  content: |
+    This API uses Bearer Token (JWT) authentication.
+
+    You can obtain a token from Keycloak:
+
+    ```plaintext
+    https://localhost:8080/realms/tickets/protocol/openid-connect/token
+    ```
+
+    _(Replace `8080` and `tickets` with your actual Keycloak port and realm if needed.)_
+
+    Include the token in the `Authorization` header:
+    ```bash
+    Authorization: Bearer <your-jwt-token>
+    ```
+
+    Most endpoints require a valid JWT token.
+
+- title: Authorization and Roles
+  content: |
+    This API uses role-based access control (RBAC) managed through Keycloak.
+
+    Roles are assigned to users in Keycloak and included in the JWT token inside the `realm_access.roles` claim.
+
+    The main roles used are:
+
+    - `admin_client_role`
+    - `user_client_role`
+
+    Access to specific endpoints is restricted based on these roles.
+
+    Example of `realm_access` section in a JWT:
+    ```json
+    {
+      "realm_access": {
+        "roles": [
+          "admin_client_role",
+          "user_client_role"
+        ]
+      }
+    }
+    ```
+
+    If a user tries to access an endpoint without the required role, a `403 Forbidden` error is returned.
+
+- title: X-User-Id and X-Correlation-Id
+  content: |
+    Certain headers are automatically injected by the API Gateway after validating the user's JWT token.
+
+    These headers are:
+
+    - `X-User-Id`: Contains the authenticated user's ID (UUID).
+    - `X-Correlation-Id`: A unique ID used to trace requests across multiple services.
+
+    You do **not** need to manually set these headers when making requests through the API Gateway.
+
+    If a `X-Correlation-Id` is not present in the incoming request, the API Gateway will automatically generate a new one.
+
+    Example of automatically injected headers:
+    ```
+    X-User-Id: 1fee4567-e89b-12d3-a456-426614174000
+    X-Correlation-Id: f47ac10b-58cc-4372-a567-0e02b2c3d479
+    ```

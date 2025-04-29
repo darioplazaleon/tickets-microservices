@@ -1,0 +1,533 @@
+openapi: 3.1.0
+info:
+  title: Booking Service API
+  description: |
+    This service manages customer accounts, handles bookings, and processes ticket reservations.
+
+    It provides endpoints for customer registration, booking management, and ticket reservation workflows.
+  contact:
+    name: Dario A. Plaza Leon
+    url: https://plazaleon.tech
+    email: contact@plazaleon.tech
+  version: 1.0.0
+servers:
+- url: http://localhost:8081
+  description: Generated server url
+tags:
+- name: Customers
+  description: 👤 Operations related to customer registration and details
+- name: Bookings
+  description: 🎟️ Operations related to bookings
+paths:
+  /api/v1/customers/register:
+    post:
+      tags:
+      - Customers
+      summary: Register a new customer
+      description: |
+        Register a new customer account in the system.
+
+        The created customer details will be returned in the response.
+        This endpoint makes use of Keycloak API.
+      operationId: registerCustomer
+      requestBody:
+        description: New customer registration details
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRequest"
+            example:
+              username: Johndoe02
+              email: jhon.doe@example.com
+              password: strongPassword123
+              fullname: Jhon Doe
+              phoneNumber: "+5491155847538"
+              country: Argentina
+              birthday: 2002-10-04
+        required: true
+      responses:
+        "201":
+          description: Customer registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerResponse"
+              example:
+                id: 123e4567-e89b-12d3-a456-426614174000
+                username: Johndoe02
+                email: jhon.doe@example.com
+                fullName: John Doe
+  /api/v1/bookings/create:
+    post:
+      tags:
+      - Bookings
+      summary: Create a new booking
+      description: |
+        **Requires role**: `user_client_role`
+
+        Initiates the principal flow of the app by creating a new booking.
+      operationId: createBooking
+      parameters:
+      - name: X-User-Id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Correlation-Id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        description: Booking request
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingRequest"
+            example:
+              eventId: b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6
+              tickets:
+              - ticketType: VIP
+                quantity: 2
+        required: true
+      responses:
+        "201":
+          description: Booking created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+              example:
+                bookingId: d2f3c4e5-6a7b-8c9d-e0f1-2a3b4c5d6e7f
+                customerId: a1b2c3d4-e5f6-7a8b-9c0d-e1f2g3h4i5j6
+                eventId: b1c2d3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6
+                totalPrice: 100.0
+        "401":
+          description: Unauthorized - Invalid or missing token
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+        "403":
+          description: Forbidden - Access denied
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+        "404":
+          description: Event not found or unavailable
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+      security:
+      - bearerAuth: []
+  /api/v1/customers/{customerId}:
+    get:
+      tags:
+      - Customers
+      summary: Get customer by ID (internal use)
+      description: |
+        🔧 **Internal use only**
+
+        Retrieve customer information by customer ID.
+
+        Intended for internal service-to-service communication.
+
+        **No authentication required**.
+      operationId: getCustomerById
+      parameters:
+      - name: customerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Customer retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerResponse"
+              example:
+                id: 123e4567-e89b-12d3-a456-426614174000
+                username: Johndoe02
+                email: jhon.doe@example.com
+                fullName: Jhon Doe
+  /api/v1/customers/my-details:
+    get:
+      tags:
+      - Customers
+      summary: Get my customer details
+      description: |
+        **Requires role**: `user_client_role`
+
+        Retrieve the authenticated customer's profile information.
+      operationId: getCustomerDetails
+      parameters:
+      - name: X-User-Id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Customer details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerDetails"
+              example:
+                id: 123e4567-e89b-12d3-a456-426614174000
+                username: Johndoe02
+                email: jhon.doe@example.com
+                fullname: Jhon Doe
+                phoneNumber: "+5491155847538"
+                birthday: 2002-10-04
+                country: Argentina
+      security:
+      - bearerAuth: []
+  /api/v1/bookings/my-bookings:
+    get:
+      tags:
+      - Bookings
+      summary: Get all bookings for the authenticated user
+      description: |
+        **Requires role**: `user_client_role`
+
+        Retrieves all bookings made by the authenticated user.
+      operationId: getMyBookings
+      parameters:
+      - name: X-User-Id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: pageable
+        in: query
+        required: true
+        schema:
+          $ref: "#/components/schemas/Pageable"
+      responses:
+        "200":
+          description: Bookings retrieved successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageBookingSimple"
+        "401":
+          description: Unauthorized - Invalid or missing token
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageBookingSimple"
+      security:
+      - bearerAuth: []
+  /api/v1/bookings/my-bookings/{bookingId}:
+    get:
+      tags:
+      - Bookings
+      summary: Get a booking by ID for the authenticated user
+      description: |
+        **Requires role**: `user_client_role`
+
+        Retrieves a specific booking by ID, only if the authenticated user is the owner.
+      operationId: getMyBookingById
+      parameters:
+      - name: X-User-Id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: bookingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Bookings retrieved successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+        "401":
+          description: Unauthorized - Invalid or missing token
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+        "403":
+          description: Forbidden - Access denied
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+        "404":
+          description: Booking not found
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+      security:
+      - bearerAuth: []
+components:
+  schemas:
+    UserRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        fullName:
+          type: string
+        phoneNumber:
+          type: string
+        country:
+          type: string
+        birthday:
+          type: string
+          format: date
+    CustomerResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+        fullName:
+          type: string
+    BookingResponse:
+      type: object
+      properties:
+        bookingId:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        eventId:
+          type: string
+          format: uuid
+        totalPrice:
+          type: number
+        tickets:
+          type: array
+          items:
+            $ref: "#/components/schemas/TicketRequest"
+    TicketRequest:
+      type: object
+      properties:
+        ticketType:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+    BookingRequest:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        tickets:
+          type: array
+          items:
+            $ref: "#/components/schemas/TicketRequest"
+    CustomerDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+        fullName:
+          type: string
+        phoneNumber:
+          type: string
+        birthday:
+          type: string
+          format: date
+        country:
+          type: string
+    Pageable:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+          minimum: 0
+        size:
+          type: integer
+          format: int32
+          minimum: 1
+        sort:
+          type: array
+          items:
+            type: string
+    BookingSimple:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - PENDING
+          - CONFIRMED
+          - PAID
+          - CANCELLED
+          - COMPLETED
+          - REFUNDED
+          - EXPIRED
+        createdAt:
+          type: string
+          format: date-time
+    PageBookingSimple:
+      type: object
+      properties:
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        pageable:
+          $ref: "#/components/schemas/PageableObject"
+        first:
+          type: boolean
+        last:
+          type: boolean
+        size:
+          type: integer
+          format: int32
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/BookingSimple"
+        number:
+          type: integer
+          format: int32
+        sort:
+          $ref: "#/components/schemas/SortObject"
+        numberOfElements:
+          type: integer
+          format: int32
+        empty:
+          type: boolean
+    PageableObject:
+      type: object
+      properties:
+        paged:
+          type: boolean
+        pageNumber:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int64
+        sort:
+          $ref: "#/components/schemas/SortObject"
+        unpaged:
+          type: boolean
+    SortObject:
+      type: object
+      properties:
+        sorted:
+          type: boolean
+        empty:
+          type: boolean
+        unsorted:
+          type: boolean
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+x-topics:
+- title: Authentication
+  content: |
+    This API uses Bearer Token (JWT) authentication.
+
+    You can obtain a token from Keycloak:
+
+    ```plaintext
+    https://localhost:8080/realms/tickets/protocol/openid-connect/token
+    ```
+
+    _(Replace `8080` and `tickets` with your actual Keycloak port and realm if needed.)_
+
+    Include the token in the `Authorization` header:
+    ```bash
+    Authorization: Bearer <your-jwt-token>
+    ```
+
+    Most endpoints require a valid JWT token.
+
+- title: Authorization and Roles
+  content: |
+    This API uses role-based access control (RBAC) managed through Keycloak.
+
+    Roles are assigned to users in Keycloak and included in the JWT token inside the `realm_access.roles` claim.
+
+    The main roles used are:
+
+    - `admin_client_role`
+    - `user_client_role`
+
+    Access to specific endpoints is restricted based on these roles.
+
+    Example of `realm_access` section in a JWT:
+    ```json
+    {
+      "realm_access": {
+        "roles": [
+          "admin_client_role",
+          "user_client_role"
+        ]
+      }
+    }
+    ```
+
+    If a user tries to access an endpoint without the required role, a `403 Forbidden` error is returned.
+
+- title: X-User-Id and X-Correlation-Id
+  content: |
+    Certain headers are automatically injected by the API Gateway after validating the user's JWT token.
+
+    These headers are:
+
+    - `X-User-Id`: Contains the authenticated user's ID (UUID).
+    - `X-Correlation-Id`: A unique ID used to trace requests across multiple services.
+
+    You do **not** need to manually set these headers when making requests through the API Gateway.
+
+    If a `X-Correlation-Id` is not present in the incoming request, the API Gateway will automatically generate a new one.
+
+    Example of automatically injected headers:
+    ```
+    X-User-Id: 1fee4567-e89b-12d3-a456-426614174000
+    X-Correlation-Id: f47ac10b-58cc-4372-a567-0e02b2c3d479
+    ```

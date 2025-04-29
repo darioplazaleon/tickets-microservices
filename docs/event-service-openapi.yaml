@@ -1,0 +1,1083 @@
+openapi: 3.1.0
+info:
+  title: Event Service API
+  description: |
+    TThis service manages events, venues, categories, tags, and ticket types.
+
+    It provides public endpoints for listing events and categories, and secured administrative endpoints for creating, updating, and deleting event-related entities.
+
+    Event capacity management, ticket types availability, and venue assignments are handled within this service.
+  contact:
+    name: Dario A. Plaza Leon
+    url: https://plazaleon.tech
+    email: contact@plazaleon.tech
+  version: 1.0.0
+servers:
+- url: http://localhost:8080
+  description: Generated server url
+tags:
+- name: Categories
+  description: 🗂️ Operations related to event categories
+- name: Ticket Types
+  description: 🎟️ Operations related to ticket types and reservations
+- name: Events
+  description: 🎫 Operations related to event management
+- name: Tags
+  description: 🏷️ Operations related to event tags
+- name: Venues
+  description: 📍 Operations related to venue management
+paths:
+  /api/v1/venues/update/{venueId}:
+    put:
+      tags:
+      - Venues
+      summary: Update an existing venue
+      description: |
+        **Requires role**: `admin_client_role`
+
+        Update the details of an existing venue using its unique identifier.
+      operationId: updateVenue
+      parameters:
+      - name: venueId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LocationAddRequest"
+        required: true
+      responses:
+        "200":
+          description: Venue updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationResponse"
+              example:
+                id: 123e4567-e89b-12d3-a456-426614174000
+                name: Groove
+                address: Av. Sta. Fe 4389
+                city: Buenos Aires
+                totalCapacity: 1000
+      security:
+      - bearerAuth: []
+  /api/v1/tags/update/{tagId}:
+    put:
+      tags:
+      - Tags
+      summary: Update an existing tag
+      description: |
+        **Requires role**: `admin_client_role`
+
+        Update the name of an existing tag using its unique identifier.
+      operationId: updateTag
+      parameters:
+      - name: tagId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        description: Updated tag details
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagRequest"
+            example:
+              name: Updated Techno Tag
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TagResponse"
+      security:
+      - bearerAuth: []
+  /api/v1/events/update/{eventId}:
+    put:
+      tags:
+      - Events
+      summary: Update an existing event
+      description: |
+        **Requires role**: `admin_client_role`
+
+        Update the details of an existing event by its unique identifier.
+      operationId: updateEvent
+      parameters:
+      - name: eventId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        description: Updated event details
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventRequest"
+            example:
+              event: Ultra Music Festival 2026
+              startDate: 2025-10-01T20:00:00Z
+              location: "Buenos Aires, Argentina"
+              categoryId: 2
+              tagsIds:
+              - 2
+              - 3
+              ticketTypes:
+              - name: VIP
+                capacity: 800
+                price: 250.0
+              - name: General
+                capacity: 4500
+                price: 120.0
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EventResponse"
+      security:
+      - bearerAuth: []
+  /api/v1/categories/update/{id}:
+    put:
+      tags:
+      - Categories
+      summary: Update an existing category
+      description: |
+        **Requires role**: `admin_client_role`
+
+        Update the details of an existing category using its unique identifier.
+      operationId: updateCategory
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        description: Updated category details
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryRequest"
+            example:
+              name: Electronic Music
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CategoryResponse"
+      security:
+      - bearerAuth: []
+  /api/v1/venues/create:
+    post:
+      tags:
+      - Venues
+      summary: Create a new venue
+      description: |
+        **Requires role**: `admin_client_role`
+
+        Create a new venue with the provided details.
+
+        The created venue will be returned in the response.
+      operationId: createVenue
+      requestBody:
+        description: Details of the new venue to be created
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LocationAddRequest"
+            example:
+              name: Groove
+              address: 123 Main St
+              city: Buenos Aires
+              totalCapacity: 500
+        required: true
+      responses:
+        "201":
+          description: Venue created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationResponse"
+              example:
+                id: 123e4567-e89b-12d3-a456-426614174000
+                name: Groove
+                address: 123 Main St
+                city: Buenos Aires
+                totalCapacity: 500
+      security:
+      - bearerAuth: []
+  /api/v1/ticket-types/reserve/{eventId}:
+    post:
+      tags:
+      - Ticket Types
+      summary: Reserve tickets (internal use)
+      description: |
+        🔧 **Internal use only**
+
+        Reserve tickets for a specific event.
+
+        This endpoint is intended to be consumed by the `booking-service` during the reservation process.
+      operationId: reserveTicket
+      parameters:
+      - name: eventId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        description: Ticket reservation request
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReserveTicketRequest"
+            example:
+              ticketType: VIP
+              quantity: 2
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ReserveTicketResponse"
+  /api/v1/tags/create:
+    post:
+      tags:
+      - Tags
+      summary: Create a new tag
+      description: |
+        **Requires role**: `admin_client_role`
+
+        Create a new tag in the system.
+      operationId: createTag
+      requestBody:
+        description: Tag creation request
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagRequest"
+            example:
+              name: Hard techno
+        required: true
+      responses:
+        "201":
+          description: Tag created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagResponse"
+              example:
+                id: 123e4567-e89b-12d3-a456-426614174000
+                name: Hard techno
+      security:
+      - bearerAuth: []
+  /api/v1/events/create:
+    post:
+      tags:
+      - Events
+      summary: Create a new event
+      description: |
+        **Requires role**: `admin_client_role`
+
+        Create a new event with the provided details. Make sure to create a venue before creating an event.
+      operationId: createEvent
+      parameters:
+      - name: X-User-ID
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        description: New event details
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventRequest"
+            example:
+              event: Ultra Music Festival
+              startDate: 2025-10-01T20:00:00Z
+              location: "Buenos Aires, Argentina"
+              categoryId: 1
+              tagsIds:
+              - 1
+              ticketTypes:
+              - name: VIP
+                capacity: 1000
+                price: 200.0
+              - name: General
+                capacity: 5000
+                price: 100.0
+        required: true
+      responses:
+        "201":
+          description: Event created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventResponse"
+              example:
+                id: 123e4567-e89b-12d3-a456-426614174000
+                event: Ultra Music Festival
+                startDate: 2025-10-01T20:00:00Z
+                location: "Buenos Aires, Argentina"
+                ticketTypes:
+                - name: VIP
+                  capacity: 1000
+                  price: 200.0
+                - name: General
+                  capacity: 5000
+                  price: 100.0
+                category:
+                  id: 1
+                  name: Concert
+                tags:
+                - id: 1
+                  name: Electronic
+      security:
+      - bearerAuth: []
+  /api/v1/categories/create:
+    post:
+      tags:
+      - Categories
+      summary: Create a new category
+      description: |
+        **Requires role**: `admin_client_role`
+
+        Create a new category with the provided details.
+
+        The created category will be returned in the response.
+      operationId: createCategory
+      requestBody:
+        description: Category creation request
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryRequest"
+            example:
+              name: Music
+        required: true
+      responses:
+        "201":
+          description: Category created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategoryResponse"
+              example:
+                id: e2b0c5f4-3d1a-4c8b-9f7e-6a2f3b5e1c8d
+                name: Music
+      security:
+      - bearerAuth: []
+  /api/v1/venues/{venueId}:
+    get:
+      tags:
+      - Venues
+      summary: Get venue by ID
+      description: |
+        **Requires role**: `admin_client_role`
+
+        Retrieve detailed information about a specific venue using its unique identifier.
+      operationId: getVenueById
+      parameters:
+      - name: venueId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/LocationResponse"
+      security:
+      - bearerAuth: []
+  /api/v1/venues/all:
+    get:
+      tags:
+      - Venues
+      summary: Get all venues
+      description: |
+        **Requires role**: `admin_client_role`
+
+        Retrieve a paginated list of all venues.
+
+        You can use pagination parameters (`page`, `size`, `sort`) to control the result set.
+      operationId: getAllVenues
+      parameters:
+      - name: pageable
+        in: query
+        required: true
+        schema:
+          $ref: "#/components/schemas/Pageable"
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageLocationResponse"
+      security:
+      - bearerAuth: []
+  /api/v1/venues/all/simple:
+    get:
+      tags:
+      - Venues
+      summary: Get all venues (simple)
+      description: |
+        Retrieve a simple list of all venues with only their IDs and names.
+
+        Useful for dropdowns or quick selections.
+      operationId: getAllVenuesSimple
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VenueSimple"
+  /api/v1/tags/{tagId}:
+    get:
+      tags:
+      - Tags
+      summary: Get tag by ID
+      description: |
+        **Requires role**: `admin_client_role`
+
+        Retrieve a specific tag by its unique identifier.
+      operationId: getTagById
+      parameters:
+      - name: tagId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TagResponse"
+      security:
+      - bearerAuth: []
+  /api/v1/tags/all:
+    get:
+      tags:
+      - Tags
+      summary: Get all tags (public)
+      description: |
+        Retrieve a list of all tags available in the system.
+      operationId: getAllTags
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TagResponse"
+  /api/v1/events/{eventId}:
+    get:
+      tags:
+      - Events
+      summary: Get event by ID (public)
+      description: |
+        Retrieve detailed information about a specific event using its unique identifier.
+      operationId: getEventById
+      parameters:
+      - name: eventId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Event found
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EventRecord"
+        "404":
+          description: Event not found
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EventRecord"
+  /api/v1/events/notification/{eventId}:
+    get:
+      tags:
+      - Events
+      summary: Get event notification by ID (internal use)
+      description: |
+        🔧 **Internal use only**
+
+        This endpoint is used by the `notification-service` to fetch event details for sending notifications.
+      operationId: getEventNotificationById
+      parameters:
+      - name: eventId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EventNotificationResponse"
+      security:
+      - bearerAuth: []
+  /api/v1/events/all:
+    get:
+      tags:
+      - Events
+      summary: Get all events (public)
+      description: |
+        Retrieve a paginated list of all events.
+
+        You can use pagination parameters (`page`, `size`, `sort`) to control the result set.
+      operationId: getAllEvents
+      parameters:
+      - name: pageable
+        in: query
+        required: true
+        schema:
+          $ref: "#/components/schemas/Pageable"
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageEventResponse"
+  /api/v1/categories/{id}:
+    get:
+      tags:
+      - Categories
+      summary: Get category by ID
+      description: |
+        **Requires role**: `admin_client_role`
+
+        Retrieve detailed information about a specific category using its unique identifier.
+      operationId: getCategoryById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CategoryResponse"
+      security:
+      - bearerAuth: []
+  /api/v1/categories/all:
+    get:
+      tags:
+      - Categories
+      summary: Get all categories (public)
+      description: |
+        Retrieve a list of all available categories for events.
+      operationId: getAllCategories
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryResponse"
+  /api/v1/venues/delete/{venueId}:
+    delete:
+      tags:
+      - Venues
+      summary: Delete a venue
+      description: |
+        **Requires role**: `admin_client_role`
+
+        Delete a venue using its unique identifier.
+
+        If the venue is successfully deleted, a `204 No Content` response will be returned.
+      operationId: deleteVenue
+      parameters:
+      - name: venueId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+      security:
+      - bearerAuth: []
+  /api/v1/tags/delete/{tagId}:
+    delete:
+      tags:
+      - Tags
+      summary: Delete a tag
+      description: |
+        **Requires role**: `admin_client_role`
+
+        Delete a tag by its unique identifier. This action is irreversible.
+      operationId: deleteTag
+      parameters:
+      - name: tagId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+      security:
+      - bearerAuth: []
+  /api/v1/events/delete/{eventId}:
+    delete:
+      tags:
+      - Events
+      summary: Delete an event
+      description: |
+        **Requires role**: `admin_client_role`
+
+        Permanently delete an event by its unique identifier. This action cannot be undone.
+      operationId: deleteEvent
+      parameters:
+      - name: eventId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+      security:
+      - bearerAuth: []
+  /api/v1/categories/delete/{id}:
+    delete:
+      tags:
+      - Categories
+      summary: Delete a category
+      description: |
+        **Requires role**: `admin_client_role`
+
+        Delete a category using its unique identifier.
+
+        This action is irreversible.
+      operationId: deleteCategory
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+      security:
+      - bearerAuth: []
+components:
+  schemas:
+    LocationAddRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        totalCapacity:
+          type: integer
+          format: int32
+        address:
+          type: string
+        city:
+          type: string
+    LocationResponse:
+      type: object
+      properties:
+        venueId:
+          type: string
+          format: uuid
+        venueName:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        totalCapacity:
+          type: integer
+          format: int32
+    TagRequest:
+      type: object
+      properties:
+        name:
+          type: string
+    TagResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+    EventRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        venueId:
+          type: string
+          format: uuid
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        categoryId:
+          type: string
+          format: uuid
+        tagsNames:
+          type: array
+          items:
+            type: string
+        ticketTypes:
+          type: array
+          items:
+            $ref: "#/components/schemas/TicketTypeRequest"
+    TicketTypeRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        capacity:
+          type: integer
+          format: int32
+        price:
+          type: number
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+    EventResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event:
+          type: string
+        category:
+          $ref: "#/components/schemas/Category"
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tag"
+    Tag:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+    CategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+    CategoryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+    ReserveTicketRequest:
+      type: object
+      properties:
+        ticketType:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+    ReserveTicketResponse:
+      type: object
+      properties:
+        ticketType:
+          type: string
+        unitPrice:
+          type: number
+        reservedQuantity:
+          type: integer
+          format: int32
+        reservedUntil:
+          type: string
+          format: date-time
+    Pageable:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+          minimum: 0
+        size:
+          type: integer
+          format: int32
+          minimum: 1
+        sort:
+          type: array
+          items:
+            type: string
+    PageLocationResponse:
+      type: object
+      properties:
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        pageable:
+          $ref: "#/components/schemas/PageableObject"
+        first:
+          type: boolean
+        last:
+          type: boolean
+        size:
+          type: integer
+          format: int32
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/LocationResponse"
+        number:
+          type: integer
+          format: int32
+        sort:
+          $ref: "#/components/schemas/SortObject"
+        numberOfElements:
+          type: integer
+          format: int32
+        empty:
+          type: boolean
+    PageableObject:
+      type: object
+      properties:
+        paged:
+          type: boolean
+        pageNumber:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int64
+        sort:
+          $ref: "#/components/schemas/SortObject"
+        unpaged:
+          type: boolean
+    SortObject:
+      type: object
+      properties:
+        sorted:
+          type: boolean
+        empty:
+          type: boolean
+        unsorted:
+          type: boolean
+    VenueSimple:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+    EventRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        location:
+          type: string
+        ticketTypes:
+          type: array
+          items:
+            $ref: "#/components/schemas/TicketTypeResponse"
+    TicketTypeResponse:
+      type: object
+      properties:
+        ticketType:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+        unitPrice:
+          type: number
+    EventNotificationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        venueName:
+          type: string
+        venueAddress:
+          type: string
+    PageEventResponse:
+      type: object
+      properties:
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        pageable:
+          $ref: "#/components/schemas/PageableObject"
+        first:
+          type: boolean
+        last:
+          type: boolean
+        size:
+          type: integer
+          format: int32
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventResponse"
+        number:
+          type: integer
+          format: int32
+        sort:
+          $ref: "#/components/schemas/SortObject"
+        numberOfElements:
+          type: integer
+          format: int32
+        empty:
+          type: boolean
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+x-topics:
+- title: Authentication
+  content: |
+    This API uses Bearer Token (JWT) authentication.
+
+    You can obtain a token from Keycloak:
+
+    ```plaintext
+    https://localhost:8080/realms/tickets/protocol/openid-connect/token
+    ```
+
+    _(Replace `8080` and `tickets` with your actual Keycloak port and realm if needed.)_
+
+    Include the token in the `Authorization` header:
+    ```bash
+    Authorization: Bearer <your-jwt-token>
+    ```
+
+    Most endpoints require a valid JWT token.
+
+- title: Authorization and Roles
+  content: |
+    This API uses role-based access control (RBAC) managed through Keycloak.
+
+    Roles are assigned to users in Keycloak and included in the JWT token inside the `realm_access.roles` claim.
+
+    The main roles used are:
+
+    - `admin_client_role`
+    - `user_client_role`
+
+    Access to specific endpoints is restricted based on these roles.
+
+    Example of `realm_access` section in a JWT:
+    ```json
+    {
+      "realm_access": {
+        "roles": [
+          "admin_client_role",
+          "user_client_role"
+        ]
+      }
+    }
+    ```
+
+    If a user tries to access an endpoint without the required role, a `403 Forbidden` error is returned.
+
+- title: X-User-Id and X-Correlation-Id
+  content: |
+    Certain headers are automatically injected by the API Gateway after validating the user's JWT token.
+
+    These headers are:
+
+    - `X-User-Id`: Contains the authenticated user's ID (UUID).
+    - `X-Correlation-Id`: A unique ID used to trace requests across multiple services.
+
+    You do **not** need to manually set these headers when making requests through the API Gateway.
+
+    If a `X-Correlation-Id` is not present in the incoming request, the API Gateway will automatically generate a new one.
+
+    Example of automatically injected headers:
+    ```
+    X-User-Id: 1fee4567-e89b-12d3-a456-426614174000
+    X-Correlation-Id: f47ac10b-58cc-4372-a567-0e02b2c3d479
+    ```

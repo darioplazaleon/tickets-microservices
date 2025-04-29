@@ -1,0 +1,363 @@
+openapi: 3.1.0
+info:
+  title: Order Service API
+  description: |
+    This service manages customer orders, including order creation, order expiration, status updates, and communication with payment service.
+
+    It supports full retrieval and summary access to orders for internal microservices and customers.
+  contact:
+    name: Dario A. Plaza Leon
+    url: https://plazaleon.tech
+    email: contact@plazaleon.tech
+  version: 1.0.0
+servers:
+- url: http://localhost:8082
+  description: Generated server url
+tags:
+- name: Orders
+  description: 📦 Operations related to order management
+paths:
+  /api/v1/orders/{orderId}/summary:
+    get:
+      tags:
+      - Orders
+      summary: Get order summary (internal use)
+      description: |
+        🔧 **Internal use only**
+
+        Retrieve a summary of an order by its ID.
+
+        Returns less information than `/order/{orderId}`.
+      operationId: getOrderSummary
+      parameters:
+      - name: orderId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Order summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderSummary"
+              example:
+                totalPrice: 200.0
+                tickets:
+                - ticketType: VIP
+                  quantity: 2
+  /api/v1/orders/order/{orderId}:
+    get:
+      tags:
+      - Orders
+      summary: Get order by ID (internal use)
+      description: |
+        🔧 **Internal use only**
+
+        Retrieve full order details by its ID.
+
+        Intended for microservices like `payment-service`, `ticket-service`.
+      operationId: getOrder
+      parameters:
+      - name: orderId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Order retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+              example:
+                orderId: 123e4567-e89b-12d3-a456-426614174000
+                bookingId: 223e4567-e89b-12d3-a456-426614174000
+                customerId: 323e4567-e89b-12d3-a456-426614174000
+                eventId: 423e4567-e89b-12d3-a456-426614174000
+                totalPrice: 200.0
+                status: PENDING_PAYMENT
+                expiresAt: 2025-04-28T12:00:00Z
+                correlationId: 523e4567-e89b-12d3-a456-426614174000
+                tickets:
+                - ticketType: VIP
+                  quantity: 2
+                  unitPrice: 100.0
+  /api/v1/orders/my-orders:
+    get:
+      tags:
+      - Orders
+      summary: Get my customer orders
+      description: |
+        **Requires role**: `user_client_role`
+
+        Retrieve a paginated list of the customer's own orders.
+      operationId: getMyOrders
+      parameters:
+      - name: X-User-ID
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: pageable
+        in: query
+        required: true
+        schema:
+          $ref: "#/components/schemas/Pageable"
+      responses:
+        "200":
+          description: Customer orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderSimple"
+              example:
+                id: 123e4567-e89b-12d3-a456-426614174000
+                orderStatus: PENDING_PAYMENT
+                status: PENDING_PAYMENT
+                createdAt: 2025-04-28T12:00:00Z
+      security:
+      - bearerAuth: []
+  /api/v1/orders/my-orders/{orderId}:
+    get:
+      tags:
+      - Orders
+      summary: Get my customer order by ID
+      description: |
+        **Requires role**: `user_client_role`
+
+        Retrieve full details of a specific customer-owned order.
+      operationId: getMyOrder
+      parameters:
+      - name: orderId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-User-ID
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Customer order retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderDTO"
+              example:
+                id: 123e4567-e89b-12d3-a456-426614174000
+                customerId: 323e4567-e89b-12d3-a456-426614174000
+                eventId: 423e4567-e89b-12d3-a456-426614174000
+                bookingId: 223e4567-e89b-12d3-a456-426614174000
+                status: PAID
+                totalPrice: 200.0
+                tickets:
+                - ticketType: VIP
+                  quantity: 2
+                  unitPrice: 100.0
+      security:
+      - bearerAuth: []
+components:
+  schemas:
+    OrderSummary:
+      type: object
+      properties:
+        totalPrice:
+          type: number
+        tickets:
+          type: array
+          items:
+            $ref: "#/components/schemas/TicketSummary"
+    TicketSummary:
+      type: object
+      properties:
+        ticketType:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+    OrderResponse:
+      type: object
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        bookingId:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        eventId:
+          type: string
+          format: uuid
+        totalPrice:
+          type: number
+        status:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        correlationId:
+          type: string
+          format: uuid
+        tickets:
+          type: array
+          items:
+            $ref: "#/components/schemas/TicketItem"
+    TicketItem:
+      type: object
+      properties:
+        ticketType:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+        unitPrice:
+          type: number
+    Pageable:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+          minimum: 0
+        size:
+          type: integer
+          format: int32
+          minimum: 1
+        sort:
+          type: array
+          items:
+            type: string
+    OrderSimple:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderStatus:
+          type: string
+        status:
+          type: string
+          enum:
+          - PENDING
+          - COMPLETED
+          - PAID
+          - CANCELLED
+          - REFUNDED
+          - EXPIRED
+          - FAILED
+        createdAt:
+          type: string
+          format: date-time
+    OrderDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        eventId:
+          type: string
+          format: uuid
+        bookingId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - PENDING
+          - COMPLETED
+          - PAID
+          - CANCELLED
+          - REFUNDED
+          - EXPIRED
+          - FAILED
+        totalPrice:
+          type: number
+        tickets:
+          type: array
+          items:
+            $ref: "#/components/schemas/TicketItem"
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+x-topics:
+- title: Authentication
+  content: |
+    This API uses Bearer Token (JWT) authentication.
+
+    You can obtain a token from Keycloak:
+
+    ```plaintext
+    https://localhost:8080/realms/tickets/protocol/openid-connect/token
+    ```
+
+    _(Replace `8080` and `tickets` with your actual Keycloak port and realm if needed.)_
+
+    Include the token in the `Authorization` header:
+    ```bash
+    Authorization: Bearer <your-jwt-token>
+    ```
+
+    Most endpoints require a valid JWT token.
+
+- title: Authorization and Roles
+  content: |
+    This API uses role-based access control (RBAC) managed through Keycloak.
+
+    Roles are assigned to users in Keycloak and included in the JWT token inside the `realm_access.roles` claim.
+
+    The main roles used are:
+
+    - `admin_client_role`
+    - `user_client_role`
+
+    Access to specific endpoints is restricted based on these roles.
+
+    Example of `realm_access` section in a JWT:
+    ```json
+    {
+      "realm_access": {
+        "roles": [
+          "admin_client_role",
+          "user_client_role"
+        ]
+      }
+    }
+    ```
+
+    If a user tries to access an endpoint without the required role, a `403 Forbidden` error is returned.
+
+- title: X-User-Id and X-Correlation-Id
+  content: |
+    Certain headers are automatically injected by the API Gateway after validating the user's JWT token.
+
+    These headers are:
+
+    - `X-User-Id`: Contains the authenticated user's ID (UUID).
+    - `X-Correlation-Id`: A unique ID used to trace requests across multiple services.
+
+    You do **not** need to manually set these headers when making requests through the API Gateway.
+
+    If a `X-Correlation-Id` is not present in the incoming request, the API Gateway will automatically generate a new one.
+
+    Example of automatically injected headers:
+    ```
+    X-User-Id: 1fee4567-e89b-12d3-a456-426614174000
+    X-Correlation-Id: f47ac10b-58cc-4372-a567-0e02b2c3d479
+    ```
