@@ -12,19 +12,14 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 @Service
-public class InventoryServiceClient {
+public class EventServiceClient {
 
-    @Value("${event.service.url}")
-    private String eventUri;
-
-    public EventResponse getEvent(UUID eventId) {
-         RestTemplate restTemplate = new RestTemplate();
-         return restTemplate.getForObject(eventUri + "/events/" + eventId, EventResponse.class);
-    }
+    @Value("${ticket.service.url}")
+    private String ticketUri;
 
     public BigDecimal reserveTicket(UUID eventId, String ticketType, int quantity) {
         RestTemplate restTemplate = new RestTemplate();
-        String url = "http://localhost:8080/api/v1/ticket-types/reserve/" + eventId;
+        String url = ticketUri + "/reserve/" + eventId;
 
         ReserveTicketRequest reserveTicketRequest = new ReserveTicketRequest(ticketType, quantity);
 
@@ -34,8 +29,6 @@ public class InventoryServiceClient {
         if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
             throw new IllegalStateException("Failed to reserve ticket");
         }
-
-        System.out.println("✅ Reserva exitosa: " + response.getBody());
 
         return response.getBody().unitPrice();
     }

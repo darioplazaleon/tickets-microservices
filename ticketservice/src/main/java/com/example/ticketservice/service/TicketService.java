@@ -5,6 +5,7 @@ import com.example.ticketservice.entity.TicketOwnership;
 import com.example.ticketservice.repository.TicketOwnershipRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -15,6 +16,7 @@ public class TicketService {
 
     private final TicketOwnershipRepository ticketOwnershipRepository;
 
+    @Cacheable(value = "ticketData", key = "#ticketId")
     public TicketData getTicketById(UUID ticketId) {
         TicketOwnership ticket = ticketOwnershipRepository.findById(ticketId)
                 .orElseThrow();

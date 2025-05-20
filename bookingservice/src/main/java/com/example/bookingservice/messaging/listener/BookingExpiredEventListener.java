@@ -2,6 +2,7 @@ package com.example.bookingservice.messaging.listener;
 
 import com.example.bookingservice.entity.BookingStatus;
 import com.example.bookingservice.repository.BookingRepository;
+import com.example.bookingservice.service.TicketHoldService;
 import com.example.shared.events.OrderExpiredEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,144 +1,149 @@
 package com.example.eventservice.service;
 
+import com.example.eventservice.config.RestPage;
 import com.example.eventservice.entity.*;
 import com.example.eventservice.repository.CategoryRepository;
 import com.example.eventservice.repository.EventRepository;
-import com.example.eventservice.repository.TicketTypeRepository;
 import com.example.eventservice.repository.VenueRepository;
 import com.example.eventservice.request.EventRequest;
-import com.example.eventservice.request.ReserveTicketRequest;
-import com.example.eventservice.response.EventNotificationResponse;
 import com.example.eventservice.response.EventRecord;
 import com.example.eventservice.response.EventResponse;
-import com.example.eventservice.response.ReserveTicketResponse;
+import com.example.shared.data.EventSimpleData;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class EventService {
 
-  private final EventRepository eventRepository;
-  private final VenueRepository venueRepository;
-  private final CategoryRepository categoryRepository;
-  private final TicketTypeRepository ticketTypeRepository;
-  private final TagService tagService;
-  private final TicketTypeService ticketTypeService;
+    private final EventRepository eventRepository;
+    private final VenueRepository venueRepository;
+    private final CategoryRepository categoryRepository;
+    private final TagService tagService;
+    private final TicketTypeService ticketTypeService;
 
-  public EventRecord getEventById(UUID id) {
-    Event event =
-        eventRepository
-            .findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Event not found"));
+    @Cacheable(value = "event", key = "#id")
+    public EventRecord getEventById(UUID id) {
+        Event event =
+                eventRepository
+                        .findById(id)
+                        .orElseThrow(() -> new EntityNotFoundException("Event not found"));
 
-    return new EventRecord(event);
-  }
-
-  public EventNotificationResponse getEventNotificationById(UUID eventId) {
-    Event event =
-        eventRepository
-            .findById(eventId)
-            .orElseThrow(() -> new EntityNotFoundException("Event not found"));
-
-    return new EventNotificationResponse(
-        event.getId(),
-        event.getName(),
-        event.getStartDate(),
-        event.getVenue().getName(),
-        event.getVenue().getAddress());
-  }
-
-  public Page<EventResponse> getAllEvents(Pageable pageable) {
-    return eventRepository.findAll(pageable).map(EventResponse::new);
-  }
-
-  public EventRecord createEvent(EventRequest newEvent, UUID createdByUserId) {
-    if (eventRepository.findByName(newEvent.name()).isPresent()) {
-      throw new EntityExistsException("Event already exists");
+        return new EventRecord(event);
     }
 
-    if (venueRepository.findById(newEvent.venueId()).isEmpty()) {
-      throw new EntityNotFoundException("Venue not found");
+    @Cacheable(value = "eventData", key = "#eventId")
+    public EventSimpleData getEventNotificationById(UUID eventId) {
+        Event event =
+                eventRepository
+                        .findById(eventId)
+                        .orElseThrow(() -> new EntityNotFoundException("Event not found"));
+
+        return new EventSimpleData(
+                event.getId(),
+                event.getName(),
+                event.getStartDate(),
+                event.getVenue().getName(),
+                event.getVenue().getAddress());
     }
 
-    List<Tag> tags =
-        newEvent.tagsNames().stream().map(tagService::createIfNotExists).distinct().toList();
-
-    Category category =
-        categoryRepository
-            .findById(newEvent.categoryId())
-            .orElseThrow(() -> new EntityNotFoundException("Category not found"));
-
-    Venue venue = venueRepository.findById(newEvent.venueId()).get();
-
-    var eventDb =
-        Event.builder()
-            .name(newEvent.name())
-            .venue(venue)
-            .startDate(newEvent.startDate())
-            .endDate(newEvent.endDate())
-            .status(EventStatus.UPCOMING)
-            .category(category)
-            .createdByUserId(createdByUserId)
-            .tags(tags)
-            .build();
-
-    List<TicketType> ticketTypes =
-        newEvent.ticketTypes().stream()
-            .map(tt -> ticketTypeService.saveTicketType(tt, eventDb))
-            .toList();
-
-    eventDb.setTicketTypes(ticketTypes);
-
-    var savedEvent = eventRepository.save(eventDb);
-
-    return new EventRecord(savedEvent);
-  }
-
-  public EventResponse updateEvent(UUID id, EventRequest newEvent) {
-    Event event =
-        eventRepository
-            .findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Event not found"));
-
-    if (!event.getName().equals(newEvent.name())
-        && eventRepository.findByName(newEvent.name()).isPresent()) {
-      throw new EntityExistsException("Event with the new name already exists");
+    @Cacheable(value = "Event_Response_Page")
+    public RestPage<EventResponse> getAllEvents(Pageable pageable) {
+        Page<EventResponse> page = eventRepository
+                .findAll(pageable)
+                .map(EventResponse::new);
+        return new RestPage<>(page);
     }
 
-    Category category =
-        categoryRepository
-            .findById(newEvent.categoryId())
-            .orElseThrow(() -> new EntityNotFoundException("Category not found"));
+    @CacheEvict(value = {"events", "event", "eventData"}, allEntries = true)
+    public EventRecord createEvent(EventRequest newEvent, UUID createdByUserId) {
+        if (eventRepository.findByName(newEvent.name()).isPresent()) {
+            throw new EntityExistsException("Event already exists");
+        }
 
-    event.setName(newEvent.name());
-    event.setStartDate(newEvent.startDate());
-    event.setEndDate(newEvent.endDate());
-    event.setCategory(category);
+        if (venueRepository.findById(newEvent.venueId()).isEmpty()) {
+            throw new EntityNotFoundException("Venue not found");
+        }
 
-    Event updatedEvent = eventRepository.save(event);
-    return new EventResponse(updatedEvent);
-  }
+        List<Tag> tags =
+                newEvent.tagsNames().stream().map(tagService::createIfNotExists).distinct().toList();
 
-  public void deleteEvent(UUID id) {
-    Event event =
-        eventRepository
-            .findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Event not found"));
+        Category category =
+                categoryRepository
+                        .findById(newEvent.categoryId())
+                        .orElseThrow(() -> new EntityNotFoundException("Category not found"));
 
-    eventRepository.delete(event);
-    log.info("Deleted event with id: {}", id);
-  }
+        Venue venue = venueRepository.findById(newEvent.venueId()).get();
+
+        var eventDb =
+                Event.builder()
+                        .name(newEvent.name())
+                        .venue(venue)
+                        .startDate(newEvent.startDate())
+                        .endDate(newEvent.endDate())
+                        .status(EventStatus.UPCOMING)
+                        .category(category)
+                        .createdByUserId(createdByUserId)
+                        .tags(tags)
+                        .build();
+
+        List<TicketType> ticketTypes =
+                newEvent.ticketTypes().stream()
+                        .map(tt -> ticketTypeService.saveTicketType(tt, eventDb))
+                        .toList();
+
+        eventDb.setTicketTypes(ticketTypes);
+
+        var savedEvent = eventRepository.save(eventDb);
+
+        return new EventRecord(savedEvent);
+    }
+
+    @CacheEvict(value = {"events", "event", "eventData"}, allEntries = true)
+    public EventResponse updateEvent(UUID id, EventRequest newEvent) {
+        Event event =
+                eventRepository
+                        .findById(id)
+                        .orElseThrow(() -> new EntityNotFoundException("Event not found"));
+
+        if (!event.getName().equals(newEvent.name())
+                && eventRepository.findByName(newEvent.name()).isPresent()) {
+            throw new EntityExistsException("Event with the new name already exists");
+        }
+
+        Category category =
+                categoryRepository
+                        .findById(newEvent.categoryId())
+                        .orElseThrow(() -> new EntityNotFoundException("Category not found"));
+
+        event.setName(newEvent.name());
+        event.setStartDate(newEvent.startDate());
+        event.setEndDate(newEvent.endDate());
+        event.setCategory(category);
+
+        Event updatedEvent = eventRepository.save(event);
+        return new EventResponse(updatedEvent);
+    }
+
+    @CacheEvict(value = {"events", "event", "eventData"}, allEntries = true)
+    public void deleteEvent(UUID id) {
+        Event event =
+                eventRepository
+                        .findById(id)
+                        .orElseThrow(() -> new EntityNotFoundException("Event not found"));
+
+        eventRepository.delete(event);
+        log.info("Deleted event with id: {}", id);
+    }
 }

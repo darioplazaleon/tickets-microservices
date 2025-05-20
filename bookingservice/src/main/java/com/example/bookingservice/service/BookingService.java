@@ -1,10 +1,7 @@
 package com.example.bookingservice.service;
 
-import com.example.bookingservice.client.InventoryServiceClient;
-import com.example.bookingservice.entity.Booking;
-import com.example.bookingservice.entity.BookingStatus;
-import com.example.bookingservice.entity.BookingTicket;
-import com.example.bookingservice.entity.Customer;
+import com.example.bookingservice.client.EventServiceClient;
+import com.example.bookingservice.entity.*;
 import com.example.bookingservice.messaging.publisher.BookingEventPublisher;
 import com.example.bookingservice.repository.BookingRepository;
 import com.example.bookingservice.repository.CustomerRepository;
@@ -13,9 +10,9 @@ import com.example.bookingservice.request.TicketRequest;
 import com.example.bookingservice.response.BookingResponse;
 import com.example.bookingservice.response.BookingSimple;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.time.Instant;
+import java.util.*;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -28,9 +25,10 @@ import org.springframework.stereotype.Service;
 public class BookingService {
 
   private final CustomerRepository customerRepository;
-  private final InventoryServiceClient inventoryServiceClient;
+  private final EventServiceClient inventoryServiceClient;
   private final BookingRepository bookingRepository;
   private final BookingEventPublisher bookingEventPublisher;
+  private final TicketHoldService ticketService;
 
   public BookingResponse createBooking(UUID userId, UUID correlationId, BookingRequest request) {
 
@@ -38,8 +36,11 @@ public class BookingService {
       throw new RuntimeException("No tickets found");
     }
 
+    String holdId = UUID.randomUUID().toString();
+
     List<BookingTicket> bookingTickets = new ArrayList<>();
     BigDecimal totalPrice = BigDecimal.ZERO;
+    Map<String, Integer> ticketCounts = new HashMap<>();
 
     for (TicketRequest ticket : request.tickets()) {
       if (ticket.quantity() <= 0) {
@@ -61,7 +62,13 @@ public class BookingService {
               .build();
 
       bookingTickets.add(bookingTicket);
+
+      ticketCounts.put(ticket.ticketType(), ticket.quantity());
     }
+
+    TicketHold hold = new TicketHold(
+        request.eventId(), userId, ticketCounts, Instant.now());
+    ticketService.holdTickets(holdId, hold);
 
     Customer customer =
         customerRepository

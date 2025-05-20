@@ -5,7 +5,6 @@ import com.example.orderservice.entity.Order;
 import com.example.orderservice.entity.OrderStatus;
 import com.example.orderservice.entity.OrderTicket;
 import com.example.orderservice.repository.OrderRepository;
-import com.example.orderservice.request.PaymentSuccessRequest;
 import com.example.orderservice.response.OrderDTO;
 import com.example.orderservice.response.OrderResponse;
 import com.example.orderservice.response.OrderSimple;
@@ -14,6 +13,7 @@ import com.example.shared.events.BookingCreatedEvent;
 import com.example.shared.records.TicketInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -37,6 +37,7 @@ public class OrderService {
         return createOrderResponse(order);
     }
 
+    @Cacheable(value = "orderSummary", key = "#orderId")
     public OrderSummary getSummary(UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
@@ -132,5 +133,14 @@ public class OrderService {
         order.setTicketItems(ticketItems);
 
         orderRepository.save(order);
+    }
+
+    public void markExpired(UUID orderId) {
+        orderRepository.findById(orderId).ifPresent(order -> {
+            if (order.getStatus() == OrderStatus.PENDING) {
+                order.setStatus(OrderStatus.EXPIRED);
+                orderRepository.save(order);
+            }
+        });
     }
 }

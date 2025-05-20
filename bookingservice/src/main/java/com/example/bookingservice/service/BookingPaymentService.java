@@ -15,8 +15,6 @@ public class BookingPaymentService {
     private final BookingRepository bookingRepository;
 
     public void processPaymentSuccess(PaymentSucceededEvent event) {
-
-    // Update the booking status to PAID
     bookingRepository
         .findById(event.bookingId())
         .ifPresentOrElse(

@@ -38,6 +38,10 @@ public class TicketOwnershipController {
             @PathVariable UUID ticketId,
             @RequestBody TransferRequest transferRequest) {
         ticketOwnershipService.transferTicket(ticketId, userId, transferRequest.newOwnerId());
+
+        ticketOwnershipService.evictUserTickets(userId);
+        ticketOwnershipService.evictUserTickets(transferRequest.newOwnerId());
+
         return ResponseEntity.ok().build();
     }
 

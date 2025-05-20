@@ -1,8 +1,8 @@
 package com.example.notificationservice.service;
 
 import com.example.notificationservice.response.CustomerResponse;
-import com.example.notificationservice.response.EventDetailsResponse;
 import com.example.notificationservice.response.OrderSummary;
+import com.example.shared.data.EventSimpleData;
 import com.example.shared.data.TicketData;
 import com.example.shared.events.TicketMasterQrEvent;
 import com.example.shared.events.TicketQrReadyEvent;
@@ -26,7 +26,7 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    public void sendEmail(TicketMasterQrEvent event, EventDetailsResponse eventDetails, CustomerResponse customer, OrderSummary order) throws MessagingException {
+    public void sendEmail(TicketMasterQrEvent event, EventSimpleData eventDetails, CustomerResponse customer, OrderSummary order) throws MessagingException {
         String eventName = eventDetails.event();
         String venue = eventDetails.venueName() + " - " + eventDetails.venueAddress();
         String dateFormatted = eventDetails.startDate().format(DateTimeFormatter.ofPattern("EEEE dd/MM/yyyy - HH:mm").withLocale(Locale.forLanguageTag("es-AR")));
@@ -67,7 +67,7 @@ public class EmailService {
 
     }
 
-    public void sendTransferEmail(TicketQrReadyEvent event, EventDetailsResponse eventDetails, CustomerResponse originalOwner,
+    public void sendTransferEmail(TicketQrReadyEvent event, EventSimpleData eventDetails, CustomerResponse originalOwner,
                                   CustomerResponse currentOwner, TicketData ticketData) throws MessagingException {
 
         String eventName = eventDetails.event();

@@ -32,6 +32,9 @@ public class KeycloakAdminClient {
     @Value("${keycloak.admin.client-id}")
     private String clientId;
 
+    @Value("${keycloak.admin.client-secret}")
+    private String clientSecret;
+
     public UUID createUserAngGetId(UserRequest userRequest) {
         String token = getAdminAccessToken();
 
@@ -67,13 +70,14 @@ public class KeycloakAdminClient {
     }
 
     private String getAdminAccessToken() {
-        String tokenUrl = keycloakUrl + "/realms/" + realm + "/protocol/openid-connect/token";
+        String tokenUrl = keycloakUrl + "/admin/realms/" + realm + "/protocol/openid-connect/token";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         String body = "grant_type=password" +
                 "&client_id=" + clientId +
+                "&client_secret=" + clientSecret +
                 "&username=" + adminUsername +
                 "&password=" + adminPassword;
 

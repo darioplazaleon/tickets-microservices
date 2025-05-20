@@ -1,10 +1,10 @@
 package com.example.eventservice.controller;
 
 import com.example.eventservice.request.EventRequest;
-import com.example.eventservice.response.EventNotificationResponse;
 import com.example.eventservice.response.EventRecord;
 import com.example.eventservice.response.EventResponse;
 import com.example.eventservice.service.EventService;
+import com.example.shared.data.EventSimpleData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -53,7 +53,7 @@ public class EventController {
     }
 
     @GetMapping("/notification/{eventId}")
-    public ResponseEntity<EventNotificationResponse> getEventNotificationById(
+    public ResponseEntity<EventSimpleData> getEventNotificationById(
             @PathVariable UUID eventId) {
         return ResponseEntity.ok(eventService.getEventNotificationById(eventId));
     }

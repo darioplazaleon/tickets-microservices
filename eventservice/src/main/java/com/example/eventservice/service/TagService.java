@@ -9,6 +9,8 @@ import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 public class TagService {
   private final TagRepository tagRepository;
 
+  @CacheEvict(value = {"tags", "tag"}, allEntries = true)
   public TagResponse create(TagRequest tagRequest) {
     var tag = tagRepository.findByNameIgnoreCase(tagRequest.name());
 
@@ -28,6 +31,7 @@ public class TagService {
     return new TagResponse(newTag.getId(), newTag.getName());
   }
 
+  @CacheEvict(value = {"tags", "tag"}, allEntries = true)
   public Tag createIfNotExists(String name) {
     String normalized = name.trim().toLowerCase();
 
@@ -36,12 +40,14 @@ public class TagService {
         .orElseGet(() -> tagRepository.save(Tag.builder().name(normalized).build()));
   }
 
+  @Cacheable(value = "tag", key = "#id")
   public TagResponse findById(UUID id) {
     var tag =
         tagRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Tag not found"));
     return new TagResponse(tag.getId(), tag.getName());
   }
 
+  @Cacheable("tags")
   public List<TagResponse> findAll() {
     return tagRepository.findAll().stream()
         .map(tag -> new TagResponse(tag.getId(), tag.getName()))

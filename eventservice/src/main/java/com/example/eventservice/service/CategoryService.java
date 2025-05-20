@@ -9,6 +9,8 @@ import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -17,12 +19,14 @@ public class CategoryService {
 
   private final CategoryRepository categoryRepository;
 
+  @Cacheable("categories")
   public List<CategoryResponse> findAll() {
     return categoryRepository.findAll().stream()
         .map(category -> new CategoryResponse(category.getId(), category.getName()))
         .toList();
   }
 
+  @Cacheable(value = "category", key = "#id")
   public CategoryResponse findById(UUID id) {
     return categoryRepository
         .findById(id)
@@ -30,6 +34,7 @@ public class CategoryService {
         .orElseThrow(() -> new EntityNotFoundException("Category not found"));
   }
 
+  @CacheEvict(value = {"categories", "category"}, allEntries = true)
   public CategoryResponse createCategory(CategoryRequest newCategory) {
     if (categoryRepository.findByName(newCategory.name()).isPresent()) {
       throw new EntityExistsException("Category already exists");
@@ -42,6 +47,7 @@ public class CategoryService {
     return new CategoryResponse(categoryDb.getId(), categoryDb.getName());
   }
 
+  @CacheEvict(value = {"categories", "category"}, allEntries = true)
   public CategoryResponse updateCategory(UUID id, CategoryRequest updatedCategory) {
     Category category =
         categoryRepository
@@ -58,6 +64,7 @@ public class CategoryService {
     return new CategoryResponse(category.getId(), category.getName());
   }
 
+  @CacheEvict(value = {"categories", "category"}, allEntries = true)
   public void deleteCategory(UUID id) {
     if (!categoryRepository.existsById(id)) {
       throw new EntityNotFoundException("Category not found");

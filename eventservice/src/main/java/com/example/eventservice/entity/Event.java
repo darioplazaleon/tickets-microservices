@@ -51,7 +51,7 @@ public class Event {
   @Column(name = "created_by_user_id", nullable = false)
   private UUID createdByUserId;
 
-  @ManyToMany
+  @ManyToMany(fetch = FetchType.EAGER)
   @JoinTable(
       name = "event_tags",
       joinColumns = @JoinColumn(name = "event_id"),

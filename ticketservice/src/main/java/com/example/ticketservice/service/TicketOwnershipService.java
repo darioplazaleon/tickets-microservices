@@ -16,6 +16,8 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -113,6 +115,7 @@ public class TicketOwnershipService {
         return qrGenerator.generateMasterQrBase64(payload);
     }
 
+    @Cacheable(value = "userTickets",key = "#userId")
     public List<TicketResponse> getTicketsForUser(UUID userId) {
         return ticketOwnershipRepository.findByCurrentOwnerId(userId).stream()
                 .map(ticket -> {
@@ -129,6 +132,11 @@ public class TicketOwnershipService {
                     );
                 })
                 .toList();
+    }
+
+    @CacheEvict(key = "#userId", value = "userTickets")
+    public void evictUserTickets(UUID userId) {
+        log.info("[Ticket Service] Evicting cache for user {}", userId);
     }
 
     public void transferTicket(UUID ticketId, UUID fromUserId, UUID toUserId) {

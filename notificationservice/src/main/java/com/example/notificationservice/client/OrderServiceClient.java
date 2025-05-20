@@ -1,9 +1,9 @@
 package com.example.notificationservice.client;
 
-import com.example.notificationservice.response.EventDetailsResponse;
 import com.example.notificationservice.response.OrderSummary;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -17,8 +17,9 @@ public class OrderServiceClient {
 
     private final RestTemplate restTemplate;
 
-    public OrderSummary getOrderDetails(UUID eventId) {
-        String url = orderServiceUrl + "/" + eventId + "/summary";
+    @Cacheable(value = "orderSummaries", key = "#orderId")
+    public OrderSummary getOrderDetails(UUID orderId) {
+        String url = orderServiceUrl + "/" + orderId + "/summary";
 
         return restTemplate.getForObject(url, OrderSummary.class);
     }

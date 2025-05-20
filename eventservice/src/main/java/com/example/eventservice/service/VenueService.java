@@ -1,5 +1,6 @@
 package com.example.eventservice.service;
 
+import com.example.eventservice.config.RestPage;
 import com.example.eventservice.entity.Venue;
 import com.example.eventservice.repository.VenueRepository;
 import com.example.eventservice.request.LocationAddRequest;
@@ -11,6 +12,8 @@ import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,6 +24,7 @@ public class VenueService {
 
   private final VenueRepository venueRepository;
 
+  @Cacheable(value = "venues", key = "#venueId")
   public LocationResponse getVenueById(UUID venueId) {
     return venueRepository
         .findById(venueId)
@@ -28,16 +32,20 @@ public class VenueService {
         .orElseThrow(() -> new EntityNotFoundException("Venue not found"));
   }
 
-  public Page<LocationResponse> getAllVenues(Pageable pageable) {
-    return venueRepository.findAll(pageable).map(LocationResponse::new);
+  @Cacheable("Venue_Response_Page ")
+  public RestPage<LocationResponse> getAllVenues(Pageable pageable) {
+    Page<LocationResponse> page = venueRepository.findAll(pageable).map(LocationResponse::new);
+    return new RestPage<>(page);
   }
 
+  @Cacheable("allVenuesSimple")
   public List<VenueSimple> getAllVenuesSimple() {
     return venueRepository.findAll().stream()
         .map(venue -> new VenueSimple(venue.getId(), venue.getName()))
         .toList();
   }
 
+  @CacheEvict(value = {"venues", "allVenues"}, allEntries = true)
   public LocationResponse createVenue(LocationAddRequest newLocationRequest) {
     if (venueRepository.findByName(newLocationRequest.name()).isPresent()) {
       throw new EntityExistsException("Venue with this name already exists");
@@ -56,6 +64,7 @@ public class VenueService {
     return new LocationResponse(savedVenue);
   }
 
+  @CacheEvict(value = {"venues", "allVenues"}, allEntries = true)
   public LocationResponse updateVenue(UUID venueId, LocationAddRequest newLocationRequest) {
     var venue =
         venueRepository
@@ -77,6 +86,7 @@ public class VenueService {
     return new LocationResponse(updatedVenue);
   }
 
+  @CacheEvict(value = {"venues", "allVenues"}, allEntries = true)
   public void deleteVenue(UUID venueId) {
     var venue =
         venueRepository
