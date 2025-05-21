@@ -14,7 +14,6 @@ out/
 target/
 dependency-reduced-pom.xml
 releases/
-build/
 tmp/
 mvnw
 mvnw.cmd
@@ -51,4 +50,6 @@ coverage/
 # Ignore IntelliJ's workspace files
 **/.idea/
 **/*.iml
+
+.env
 
