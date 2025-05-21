@@ -25,7 +25,7 @@ mvnw.cmd
 logs/
 *.log
 
-# Spring Boot properties (Ignoramos todos los application.properties o .yml de cada microservicio)
+# Spring Boot properties
 **/src/main/resources/application.properties
 **/src/main/resources/application.yml
 **/src/test/resources/application.properties

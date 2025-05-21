@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.util.UUID;
 
 @Component
-@Order(Ordered.HIGHEST_PRECEDENCE + 10)
 public class TracingHeadersFilter extends OncePerRequestFilter {
 
     private static final String USER_ID_HEADER = "X-User-ID";
@@ -42,6 +41,7 @@ public class TracingHeadersFilter extends OncePerRequestFilter {
         response.setHeader(CORRELATION_ID_HEADER, correlationId);
 
         filterChain.doFilter(requestWrapper, response);
+
         System.out.println(response.getStatus());
         System.out.println(response.getHeader(CORRELATION_ID_HEADER));
         System.out.println(requestWrapper.getHeader(USER_ID_HEADER));

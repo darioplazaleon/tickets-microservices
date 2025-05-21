@@ -35,6 +35,11 @@ public class PaymentService {
 
         OrderResponse order = orderClient.getOrder(orderId);
 
+        if (order == null) {
+            log.error("Order with ID: {} not found", orderId);
+            throw new IllegalArgumentException("Order not found");
+        }
+
         if (!order.status().equalsIgnoreCase("PENDING")) {
             throw new IllegalStateException("Order is not available for payment");
         }

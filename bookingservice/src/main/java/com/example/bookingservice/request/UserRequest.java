@@ -1,13 +1,15 @@
 package com.example.bookingservice.request;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 public record UserRequest(
-        String username,
         String email,
         String password,
-        String fullName,
+        String firstName,
+        String lastName,
         String phoneNumber,
         String country,
-        LocalDate birthday
+        LocalDate birthday,
+        Set<String> roles
 ) {}
