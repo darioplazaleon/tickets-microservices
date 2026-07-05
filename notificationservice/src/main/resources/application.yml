@@ -1,0 +1,43 @@
+server:
+  port: ${NOTIFICATION_SERVICE_PORT:8085}
+
+spring:
+  application:
+    name: notificationservice
+
+  # Sin base de datos: consume eventos Kafka y envía emails.
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.example.*
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+services:
+  event-service:
+    url: ${EVENT_SERVICE_URL:http://localhost:8080}
+  order-service:
+    url: ${ORDER_SERVICE_URL:http://localhost:8082}
+  # Los customers viven en bookingservice
+  customer-service:
+    url: ${BOOKING_SERVICE_URL:http://localhost:8081}
+  ticket-service:
+    url: ${TICKET_SERVICE_URL:http://localhost:8086}

@@ -1,18 +1,27 @@
-version: "3.8"
 services:
   postgresql:
-    image: postgres:12
+    image: postgres:16-alpine
     container_name: postgres
     restart: always
     environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ticketing
+      POSTGRES_DB: ${POSTGRES_DB:-ticketing}
+      # Passwords de los roles por servicio, usadas por el init script
+      EVENT_DB_PASSWORD: ${EVENT_DB_PASSWORD}
+      BOOKING_DB_PASSWORD: ${BOOKING_DB_PASSWORD}
+      ORDER_DB_PASSWORD: ${ORDER_DB_PASSWORD}
+      TICKET_DB_PASSWORD: ${TICKET_DB_PASSWORD}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - ./docker/postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./docker/postgresql/init:/docker-entrypoint-initdb.d:ro
       - db-data:/var/lib/postgresql/data
-      - db-data:/var/log/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-ticketing}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
@@ -66,13 +75,13 @@ services:
 
   keycloak-db:
     container_name: keycloak-db
-    image: postgres:12
+    image: postgres:16-alpine
     volumes:
       - ./volume-data/postgres_keycloak_data:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${KC_DB_USER}
+      POSTGRES_PASSWORD: ${KC_DB_PASSWORD}
+      POSTGRES_DB: ${KC_DB_NAME}
 
   keycloak:
     container_name: keycloak

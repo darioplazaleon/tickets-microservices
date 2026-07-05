@@ -1,0 +1,24 @@
+# El gateway corre en 8090 porque las rutas (route/*.java) apuntan a
+# eventservice hardcodeado en localhost:8080.
+server:
+  port: ${GATEWAY_PORT:8090}
+
+spring:
+  application:
+    name: apigateway
+
+# URL del JWKS de Keycloak: SecurityConfig la usa directamente en
+# NimbusJwtDecoder.withJwkSetUri(...)
+keycloak:
+  auth-server-uri: ${KEYCLOAK_JWKS_URI:http://localhost:8091/realms/tickets/protocol/openid-connect/certs}
+
+security:
+  excluded:
+    urls: ${SECURITY_EXCLUDED_URLS:/api/v1/customers/register,/docs/**,/swagger-ui/**,/v3/api-docs/**,/actuator/**}
+
+jwt:
+  auth:
+    converter:
+      principle-attribute: ${JWT_PRINCIPAL_ATTRIBUTE:preferred_username}
+      # Client de Keycloak cuyos roles (resource_access.<client>.roles) se mapean a authorities
+      resource-id: ${KEYCLOAK_CLIENT_ID:tickets-api}

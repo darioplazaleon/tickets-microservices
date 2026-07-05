@@ -25,11 +25,8 @@ mvnw.cmd
 logs/
 *.log
 
-# Spring Boot properties
-**/src/main/resources/application.properties
-**/src/main/resources/application.yml
-**/src/test/resources/application.properties
-**/src/test/resources/application.yml
+# Secrets viven en .env (ver .env.example); los application.yml se versionan
+# con placeholders ${ENV_VAR} y NO deben contener valores sensibles.
 
 # Ignore test results
 test-results/
@@ -52,4 +49,8 @@ coverage/
 **/*.iml
 
 .env
+
+# Datos locales de Postgres/Keycloak montados como bind mounts
+volume-data/
+**/volume-data/
 

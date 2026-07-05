@@ -34,6 +34,10 @@ public class TicketType {
     @Column(nullable = false)
     private BigDecimal price;
 
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
     @ManyToOne()
     private Event event;
 

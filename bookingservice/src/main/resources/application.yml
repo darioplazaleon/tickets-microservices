@@ -1,0 +1,54 @@
+server:
+  port: ${BOOKING_SERVICE_PORT:8081}
+
+spring:
+  application:
+    name: bookingservice
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ticketing}?currentSchema=booking
+    username: ${BOOKING_DB_USER:booking_svc}
+    password: ${BOOKING_DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    default-schema: booking
+    create-schemas: false
+    locations: classpath:db/migration
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.example.*
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+# La property se llama ticket.service.url pero apunta a eventservice
+# (es lo que usa EventServiceClient; renombrarla queda para otra fase).
+ticket:
+  service:
+    url: ${EVENT_SERVICE_URL:http://localhost:8080}
+
+keycloak:
+  auth-server-url: ${KEYCLOAK_URL:http://localhost:8091}
+  realm: ${KEYCLOAK_REALM:tickets}
+  realm.master: master
+  admin:
+    client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:admin-cli}
+    username: ${KEYCLOAK_ADMIN:admin}
+    password: ${KEYCLOAK_ADMIN_PASSWORD}
+    client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET:}

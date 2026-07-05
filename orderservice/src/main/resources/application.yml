@@ -1,0 +1,41 @@
+server:
+  port: ${ORDER_SERVICE_PORT:8082}
+
+spring:
+  application:
+    name: orderservice
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ticketing}?currentSchema=orders
+    username: ${ORDER_DB_USER:order_svc}
+    password: ${ORDER_DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    default-schema: orders
+    create-schemas: false
+    locations: classpath:db/migration
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.example.*
+
+  # Nota: RedisConfig de este servicio instancia LettuceConnectionFactory sin
+  # argumentos, por lo que hoy SIEMPRE se conecta a localhost:6379 e ignora
+  # estas properties. Se dejan declaradas para cuando se corrija esa config.
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
