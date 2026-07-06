@@ -45,9 +45,10 @@ Los publishers llaman `kafkaTemplate.send()` directamente después de escribir e
 
 No hay `DefaultErrorHandler`, `@RetryableTopic` ni dead-letter topics. Un mensaje "venenoso" (que siempre lanza excepción) bloquea la partición reintentando infinitamente.
 
-- [ ] Configurar `DefaultErrorHandler` con backoff exponencial en cada servicio consumidor
-- [ ] `DeadLetterPublishingRecoverer` para mandar los mensajes fallidos a topics `.DLT`
-- [ ] (Opcional) Alerta/log visible cuando algo cae al DLT
+- [x] `KafkaErrorHandlingConfig` en los 5 servicios consumidores: `DefaultErrorHandler` con backoff exponencial (3 reintentos, 1s→10s); `IllegalArgumentException` marcada como no-reintentable
+- [x] `DeadLetterPublishingRecoverer` → topics `<topic>.DLT`; los fallos de deserialización van con producer de bytes (payload crudo), el resto con JsonSerializer
+- [x] `ErrorHandlingDeserializer` en los YAML: un payload corrupto ya no bloquea la partición, va directo al DLT sin reintentos
+- [ ] (Opcional) Alerta/log visible cuando algo cae al DLT (hoy solo queda el ERROR log del handler)
 
 ## 5. Tests 🟠
 
@@ -89,4 +90,4 @@ No hay `DefaultErrorHandler`, `@RetryableTopic` ni dead-letter topics. Un mensaj
 
 ## Pendiente inmediato
 
-- [x] Commitear el trabajo de tracing actual (commit `dfc9d86`)
+- [x] Commitear el trabajo de tracing actual (commit `ac3b271`)
