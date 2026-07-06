@@ -14,6 +14,7 @@ import com.google.zxing.BarcodeFormat;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -36,11 +37,19 @@ public class TicketOwnershipService {
     private final TicketEventPublisher ticketEventPublisher;
     private final TicketTransferEventPublisher ticketTransferEventPublisher;
 
+    @Transactional
     public void processPayment(PaymentSucceededEvent event) {
         log.info("[Ticket Service] Processing payment for order {}", event.orderId());
         UUID orderId = event.orderId();
         UUID ownerId = event.userId();
         UUID eventId = event.eventId();
+
+        // Kafka entrega at-least-once: si ya emitimos tickets para esta orden,
+        // el evento es un duplicado y no debe volver a crearlos.
+        if (ticketOwnershipRepository.existsByOrderId(orderId)) {
+            log.warn("[Ticket Service] Tickets already exist for order {}, skipping duplicate event", orderId);
+            return;
+        }
 
         for (TicketInfo info : event.tickets()) {
             for (int i = 0; i < info.quantity(); i++) {
@@ -139,6 +148,7 @@ public class TicketOwnershipService {
         log.info("[Ticket Service] Evicting cache for user {}", userId);
     }
 
+    @Transactional
     public void transferTicket(UUID ticketId, UUID fromUserId, UUID toUserId) {
         TicketOwnership ticket = ticketOwnershipRepository.findById(ticketId)
                 .orElseThrow(() -> new IllegalArgumentException("Ticket not found"));

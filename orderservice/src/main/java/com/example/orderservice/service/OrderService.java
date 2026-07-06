@@ -11,6 +11,7 @@ import com.example.orderservice.response.OrderSimple;
 import com.example.orderservice.response.OrderSummary;
 import com.example.shared.events.BookingCreatedEvent;
 import com.example.shared.records.TicketInfo;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -104,7 +105,15 @@ public class OrderService {
         );
     }
 
+    @Transactional
     public void createOrder(BookingCreatedEvent bookingEvent) {
+        // Kafka entrega at-least-once: un BookingCreatedEvent duplicado
+        // no debe crear una segunda orden para el mismo booking.
+        if (orderRepository.existsByBookingId(bookingEvent.bookingId())) {
+            log.warn("[OrderService] Order already exists for bookingId {}, skipping duplicate event",
+                    bookingEvent.bookingId());
+            return;
+        }
 
         int totalQuantity = bookingEvent.tickets().stream()
                 .mapToInt(TicketInfo::quantity)

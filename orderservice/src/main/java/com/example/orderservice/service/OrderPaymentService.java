@@ -16,6 +16,10 @@ public class OrderPaymentService {
 
     public void processPaymentSucceeded(PaymentSucceededEvent event) {
         orderRepository.findById(event.orderId()).ifPresentOrElse(order -> {
+            if (order.getStatus() == OrderStatus.PAID) {
+                log.warn("[OrderService] Order {} already PAID, skipping duplicate event", order.getId());
+                return;
+            }
             order.setStatus(OrderStatus.PAID);
             order.setPaidAt(event.paidAt());
             orderRepository.save(order);

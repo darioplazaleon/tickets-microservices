@@ -1,9 +1,12 @@
 package com.example.eventservice.service.events;
 
+import com.example.eventservice.entity.ProcessedEvent;
+import com.example.eventservice.repository.ProcessedEventRepository;
 import com.example.eventservice.repository.TicketTypeRepository;
 import com.example.shared.events.PaymentSucceededEvent;
 import com.example.shared.records.TicketInfo;
 import jakarta.transaction.Transactional;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -17,6 +20,7 @@ import org.springframework.stereotype.Service;
 public class EventPaymentService {
 
     private final TicketTypeRepository ticketTypeRepository;
+    private final ProcessedEventRepository processedEventRepository;
 
     // Transaccional para que un retry por choque de @Version re-ejecute el lote
     // completo desde cero en vez de re-aplicar tickets ya guardados.
@@ -26,6 +30,14 @@ public class EventPaymentService {
             backoff = @Backoff(delay = 50))
     @Transactional
     public void processPaymentSuccess(PaymentSucceededEvent event) {
+        // Kafka entrega at-least-once y estos contadores no son idempotentes:
+        // un duplicado volvería a sumar sold / restar reserved.
+        String eventKey = "payment-success:" + event.orderId();
+        if (processedEventRepository.existsById(eventKey)) {
+            log.warn("[Event Service] Event {} already processed, skipping duplicate", eventKey);
+            return;
+        }
+
         for (TicketInfo ticket : event.tickets()) {
             ticketTypeRepository
                     .findByEventIdAndNameIgnoreCase(event.eventId(), ticket.ticketType())
@@ -43,5 +55,8 @@ public class EventPaymentService {
                                 event.eventId());
                     });
         }
+
+        processedEventRepository.save(
+                ProcessedEvent.builder().eventKey(eventKey).processedAt(Instant.now()).build());
     }
 }

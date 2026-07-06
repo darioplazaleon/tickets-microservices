@@ -23,4 +23,6 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     List<Order> findExpiredUnpaidOrders(@Param("now") Instant now);
 
     Page<OrderSimple> findAllByCustomerId(UUID customerId, Pageable pageable);
+
+    boolean existsByBookingId(UUID bookingId);
 }

@@ -12,16 +12,23 @@ Kafka garantiza *at-least-once*: si un consumidor falla después de procesar per
 
 **Caso más grave:** `TicketOwnershipService.processPayment` (`ticketservice`). Si `tickets.payment.success` llega dos veces, se crean tickets duplicados para la misma orden.
 
-- [ ] Chequeo de duplicados en `processPayment` (ej. `existsByOrderId(orderId)` antes de crear tickets)
-- [ ] Estrategia general: tabla `processed_events` con el eventId como clave única, por servicio consumidor
-- [ ] Revisar los 9 listeners: `BookingExpiredEventListener`, `BookingPaymentEventListener`, `OrderExpiredEventListener` (event), `PaymentSuccessEventListener` (event), `NotificationEventListener`, `TicketTransferEventListener`, `OrderEventListener`, `OrderPaymentListener`, `PaymentSuccessEventListener` (ticket)
+- [x] Chequeo de duplicados en `processPayment` (`existsByOrderId` antes de crear tickets)
+- [x] Tabla `processed_events` en eventservice (los contadores `reserved`/`sold` no tienen clave natural de dedupe) — guards en `EventPaymentService` y `EventExpirationService`
+- [x] Revisar los 9 listeners. Resultado:
+  - ticketservice `processPayment`: guard `existsByOrderId` ✓
+  - eventservice payment/expiración: `processed_events` ✓
+  - orderservice `createOrder`: guard `existsByBookingId` + unique constraint en BD (V2) ✓
+  - orderservice `processPaymentSucceeded`: guard por estado `PAID` ✓
+  - bookingservice pago: guard por estado `CONFIRMED` ✓
+  - bookingservice expiración: ya era idempotente (guard `PENDING`) ✓
+  - notificationservice (x2): un duplicado solo re-envía un email — riesgo aceptado hasta tener DLT (punto 4)
 
 ## 2. Transacciones en operaciones multi-paso 🔴 (crítico)
 
 Solo hay 3 `@Transactional` en todo el proyecto (todos en eventservice). `processPayment` guarda N tickets en un loop sin transacción: si falla a la mitad, quedan tickets huérfanos y el evento se reprocesa (agravando el punto 1).
 
-- [ ] `@Transactional` en `TicketOwnershipService.processPayment`
-- [ ] Auditar el resto de los servicios: envolver en transacción todo método con más de un write a la BD
+- [x] `@Transactional` en `TicketOwnershipService.processPayment`
+- [x] Auditar el resto de los servicios: agregado también en `TicketOwnershipService.transferTicket` y `OrderService.createOrder`; los demás handlers hacen un solo write (el guard de idempotencia + write quedan en la misma transacción donde importa)
 
 ## 3. Dual-write: BD + Kafka sin outbox 🟠
 
@@ -79,4 +86,4 @@ No hay `DefaultErrorHandler`, `@RetryableTopic` ni dead-letter topics. Un mensaj
 
 ## Pendiente inmediato
 
-- [ ] Commitear el trabajo de tracing actual (todo el diff sin commitear) antes de arrancar con los puntos de arriba
+- [x] Commitear el trabajo de tracing actual (commit `dfc9d86`)

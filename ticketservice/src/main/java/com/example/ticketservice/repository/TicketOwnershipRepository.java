@@ -14,4 +14,6 @@ public interface TicketOwnershipRepository extends JpaRepository<TicketOwnership
     Optional<TicketOwnership> findByIdAndCurrentOwnerId(UUID id, UUID ownerId);
 
     List<TicketOwnership> findByOrderId(UUID orderId);
+
+    boolean existsByOrderId(UUID orderId);
 }

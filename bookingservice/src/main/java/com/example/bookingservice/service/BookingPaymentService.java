@@ -19,6 +19,11 @@ public class BookingPaymentService {
         .findById(event.bookingId())
         .ifPresentOrElse(
             booking -> {
+              if (booking.getStatus() == BookingStatus.CONFIRMED) {
+                log.warn(
+                    "[BookingService] Booking {} already CONFIRMED, skipping duplicate event", event.bookingId());
+                return;
+              }
               booking.setStatus(BookingStatus.CONFIRMED);
               bookingRepository.save(booking);
               log.info(
