@@ -1,15 +1,13 @@
 package com.example.orderservice.messaging.publisher;
 
 import com.example.orderservice.entity.Order;
+import com.example.orderservice.messaging.outbox.OutboxEventWriter;
 import com.example.shared.events.OrderExpiredEvent;
 import com.example.shared.records.TicketInfoSimple;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -19,18 +17,15 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class OrderEventPublisher {
 
-    private final KafkaTemplate<String, OrderExpiredEvent> orderKafkaTemplate;
+    private final OutboxEventWriter outboxEventWriter;
 
     private static final String TOPIC = "tickets.order.expired";
 
     public void sendOrderExpiredEvent(Order order, UUID userId, UUID correlationId) {
         OrderExpiredEvent event = createOrderExpiredEvent(order);
 
-        ProducerRecord<String, OrderExpiredEvent> producerRecord = new ProducerRecord<>(TOPIC, event);
-        producerRecord.headers().add("user-id", userId.toString().getBytes(StandardCharsets.UTF_8));
-        producerRecord.headers().add("correlation-id", correlationId.toString().getBytes(StandardCharsets.UTF_8));
-
-        orderKafkaTemplate.send(producerRecord);
+        outboxEventWriter.append(TOPIC, order.getId().toString(), event,
+                correlationId != null ? correlationId.toString() : null);
     }
 
 

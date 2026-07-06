@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -25,4 +26,6 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     Page<OrderSimple> findAllByCustomerId(UUID customerId, Pageable pageable);
 
     boolean existsByBookingId(UUID bookingId);
+
+    Optional<Order> findByBookingId(UUID bookingId);
 }

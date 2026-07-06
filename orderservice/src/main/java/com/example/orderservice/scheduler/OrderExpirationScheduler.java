@@ -1,10 +1,6 @@
 package com.example.orderservice.scheduler;
 
-import com.example.orderservice.entity.Order;
-import com.example.orderservice.entity.OrderStatus;
-import com.example.orderservice.messaging.publisher.OrderEventPublisher;
-import com.example.orderservice.repository.OrderRepository;
-import com.example.orderservice.service.OrderService;
+import com.example.orderservice.service.OrderExpireService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -12,7 +8,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -24,10 +19,9 @@ public class OrderExpirationScheduler {
     private static final String ZSET_KEY = "orderExpiryZSet";
 
     private final StringRedisTemplate redis;
-    private final OrderEventPublisher publisher;
-    private final OrderRepository orderRepository;
+    private final OrderExpireService orderExpireService;
 
-    @Scheduled(fixedDelay = 60__000)
+    @Scheduled(fixedDelay = 60_000)
     public void expireOldOrders() {
         long now = Instant.now().toEpochMilli();
         Set<String> expired = redis.opsForZSet().rangeByScore(ZSET_KEY, 0, now);
@@ -36,27 +30,19 @@ public class OrderExpirationScheduler {
         log.info("Expired orders found: {}", expired);
 
         for (String idStr : expired) {
-            redis.opsForZSet().remove(ZSET_KEY, idStr);
-            UUID orderId;
-
+            UUID bookingId;
             try {
-                orderId = UUID.fromString(idStr);
+                bookingId = UUID.fromString(idStr);
             } catch (IllegalArgumentException e) {
-                log.error("Invalid order ID format: {}", idStr, e);
+                log.error("Invalid booking ID format: {}", idStr, e);
+                redis.opsForZSet().remove(ZSET_KEY, idStr);
                 continue;
             }
 
-            orderRepository.findById(orderId).ifPresent(order -> {
-                if (order.getStatus() == OrderStatus.PENDING) {
-                    order.setStatus(OrderStatus.EXPIRED);
-                    orderRepository.save(order);
-                    log.info("Order {} expired", orderId);
-
-                    publisher.sendOrderExpiredEvent(order, order.getCustomerId(), order.getCorrelationId());
-                } else {
-                    log.info("Order {} is not in PENDING status, skipping expiration", orderId);
-                }
-            });
+            orderExpireService.expireByBookingId(bookingId);
+            // Se remueve después de expirar: si el proceso muere a mitad, el
+            // próximo tick lo reintenta (expireByBookingId es idempotente).
+            redis.opsForZSet().remove(ZSET_KEY, idStr);
         }
     }
 }

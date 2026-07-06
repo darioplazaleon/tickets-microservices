@@ -34,9 +34,12 @@ Solo hay 3 `@Transactional` en todo el proyecto (todos en eventservice). `proces
 
 Los publishers llaman `kafkaTemplate.send()` directamente después de escribir en la BD. Si la BD commitea y Kafka falla (o al revés), los servicios quedan inconsistentes (ej.: tickets creados pero la notificación del QR nunca sale).
 
-- [ ] Implementar patrón **Transactional Outbox**: guardar el evento en una tabla `outbox` dentro de la misma transacción del write de negocio
-- [ ] Publicador: scheduler que lee la tabla outbox y publica a Kafka (alternativa avanzada: Debezium/CDC)
-- [ ] Empezar por ticketservice (flujo de pago) y orderservice
+- [x] Implementar patrón **Transactional Outbox**: tabla `outbox_events` + `OutboxEventWriter` (escribe en la TX de negocio) en ticketservice y orderservice
+- [x] Publicador: `OutboxRelay` (@Scheduled cada 2s) lee pendientes en orden, publica con el tipo original (header `__TypeId__` intacto) y marca `published_at`; ante error corta el batch y reintenta
+- [x] ticketservice (`tickets.qr.ready`, `tickets.qr.transfer`) y orderservice (`tickets.order.expired`)
+- [ ] Pendiente: bookingservice (`tickets.booking.created`) y paymentservice (`tickets.payment.success`) — conviene hacerlo después de extraer el outbox a un módulo compartido (punto 6)
+
+> Bug encontrado y corregido de paso: `OrderExpirationScheduler` guardaba `bookingId` en el ZSet de Redis pero lo buscaba como `orderId` (`findById`) — las órdenes nunca expiraban por esa vía. Ahora busca por `bookingId` y la expiración corre en transacción (`OrderExpireService.expireByBookingId`), removiendo del ZSet recién después de procesar.
 
 ## 4. Manejo de errores en los listeners (DLT) 🟠
 
