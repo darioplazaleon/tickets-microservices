@@ -28,6 +28,9 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<!-- Boot 3.4 trae 1.20.x, cuyo cliente docker-java usa una API demasiado
+		     vieja para daemons Docker recientes (exigen API >= 1.40). -->
+		<testcontainers.version>1.21.3</testcontainers.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -112,6 +115,21 @@
 			<groupId>org.aspectj</groupId>
 			<artifactId>aspectjweaver</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-testcontainers</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -138,6 +156,17 @@
 							<artifactId>lombok</artifactId>
 						</exclude>
 					</excludes>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<systemPropertyVariables>
+						<!-- docker-java manda requests sin versión de API y los daemons
+						     Docker recientes las rechazan (mínimo 1.40). -->
+						<api.version>1.44</api.version>
+					</systemPropertyVariables>
 				</configuration>
 			</plugin>
 		</plugins>

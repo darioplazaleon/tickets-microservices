@@ -54,9 +54,14 @@ No hay `DefaultErrorHandler`, `@RetryableTopic` ni dead-letter topics. Un mensaj
 
 175 clases de producción, solo los 7 stubs `contextLoads()`. Orden sugerido por valor:
 
-- [ ] Unit tests de `TicketTypeService.reserveTickets` (lógica de capacidad y concurrencia — corazón del negocio)
-- [ ] Tests de integración con **Testcontainers** (Postgres + Kafka) para el flujo booking → order → payment → ticket
-- [ ] Tests de los listeners verificando idempotencia (después del punto 1)
+- [x] Unit tests de `TicketTypeService.reserveTickets` (capacidad, cantidad inválida, tipo inexistente)
+- [x] Test de integración con **Testcontainers** (Postgres real): `TicketReservationConcurrencyTest` — 20 hilos concurrentes nunca sobrevenden la capacidad (valida el locking optimista + retry)
+- [x] Tests de idempotencia de los handlers: event (payment/expiración), ticket (processPayment), order (createOrder/pago), booking (pago) — 28 tests en total
+- [x] Tests del outbox: `OutboxRelayTest` (publica con tipo original + header de correlación, corta el batch ante fallo para preservar orden)
+- [x] Eliminados los 7 stubs `contextLoads()` (requerían la infraestructura real levantada y no verificaban nada)
+- [ ] Pendiente: test de integración del flujo completo booking → order → payment → ticket con Kafka (Testcontainers Kafka), idealmente tras el módulo compartido (punto 6)
+
+> Nota: los daemons Docker recientes rechazan la API vieja que usa docker-java; quedó fijado `api.version=1.44` vía surefire en eventservice y `testcontainers.version=1.21.3`.
 
 ## 6. Código duplicado entre servicios 🟡
 
