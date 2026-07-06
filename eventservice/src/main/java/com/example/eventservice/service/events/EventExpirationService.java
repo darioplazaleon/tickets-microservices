@@ -1,14 +1,15 @@
 package com.example.eventservice.service.events;
 
-import com.example.eventservice.entity.Event;
 import com.example.eventservice.entity.TicketType;
-import com.example.eventservice.repository.EventRepository;
 import com.example.eventservice.repository.TicketTypeRepository;
 import com.example.shared.events.OrderExpiredEvent;
 import com.example.shared.records.TicketInfoSimple;
-import java.util.Optional;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,29 +17,27 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class EventExpirationService {
 
-  private final EventRepository eventRepository;
   private final TicketTypeRepository ticketTypeRepository;
 
+  // Transaccional para que un retry por choque de @Version re-ejecute el lote
+  // completo desde cero en vez de re-aplicar tickets ya guardados.
+  @Retryable(
+      retryFor = ObjectOptimisticLockingFailureException.class,
+      maxAttempts = 3,
+      backoff = @Backoff(delay = 50))
+  @Transactional
   public void processOrderExpiration(OrderExpiredEvent event) {
-    Optional<Event> eventOptional = eventRepository.findById(event.orderId());
-    if (eventOptional.isEmpty()) {
-      log.warn("Event not found for orderId: {}. Ignoring event.", event.orderId());
-      return;
-    }
-
-    Event domainEvent = eventOptional.get();
-
     for (TicketInfoSimple ticketInfo : event.tickets()) {
       TicketType type =
           ticketTypeRepository
-              .findByEventIdAndNameIgnoreCase(domainEvent.getId(), ticketInfo.ticketType())
+              .findByEventIdAndNameIgnoreCase(event.eventId(), ticketInfo.ticketType())
               .orElse(null);
 
       if (type == null) {
         log.warn(
             "TicketType '{}' not found for eventId: {}. Ignoring ticket info.",
             ticketInfo.ticketType(),
-            domainEvent.getId());
+            event.eventId());
         continue;
       }
 
@@ -54,6 +53,6 @@ public class EventExpirationService {
     }
 
     log.info(
-        "Event {} updated successfully after order expiration {}.", domainEvent.getId(), event.orderId());
+        "Event {} updated successfully after order expiration {}.", event.eventId(), event.orderId());
   }
 }

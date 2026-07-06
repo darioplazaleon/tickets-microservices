@@ -7,9 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -17,13 +15,10 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import java.time.Duration;
 import java.util.Map;
 
+// La connection factory la autoconfigura Spring Boot desde spring.data.redis.*
+// (un bean propio sin argumentos ignoraba REDIS_HOST/REDIS_PORT).
 @Configuration
 public class RedisConfig {
-
-    @Bean
-    public RedisConnectionFactory redisConnectionFactory() {
-        return new LettuceConnectionFactory();
-    }
 
     @Bean
     public ObjectMapper redisObjectMapper() {

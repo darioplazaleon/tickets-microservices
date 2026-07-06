@@ -37,9 +37,8 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
-# La property se llama ticket.service.url pero apunta a eventservice
-# (es lo que usa EventServiceClient; renombrarla queda para otra fase).
-ticket:
+# Base URL de eventservice (EventServiceClient le agrega el path del endpoint)
+event:
   service:
     url: ${EVENT_SERVICE_URL:http://localhost:8080}
 
@@ -52,3 +51,7 @@ keycloak:
     username: ${KEYCLOAK_ADMIN:admin}
     password: ${KEYCLOAK_ADMIN_PASSWORD}
     client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET:}
+
+logging:
+  pattern:
+    level: "%5p [cid:%X{correlationId:-}]"

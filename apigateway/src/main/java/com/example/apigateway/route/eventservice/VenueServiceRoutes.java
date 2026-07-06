@@ -1,6 +1,7 @@
 package com.example.apigateway.route.eventservice;
 
 import com.example.apigateway.config.CustomHeaderFilter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions;
 import org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions;
 import org.springframework.context.annotation.Bean;
@@ -13,19 +14,23 @@ import org.springframework.web.servlet.function.ServerResponse;
 @Configuration
 public class VenueServiceRoutes {
 
+    // Los venues viven en eventservice
+    @Value("${services.event-service.url}")
+    private String eventServiceUrl;
+
     @Bean
     public RouterFunction<ServerResponse> venueRoutes() {
         return GatewayRouterFunctions.route("venue-service")
                 .route(RequestPredicates.GET("/api/v1/venues/{venueId}"),
-                        request -> forwardWithPathVariable(request, "venueId", "http://localhost:8080/api/v1/venues/"))
+                        request -> forwardWithPathVariable(request, "venueId", eventServiceUrl + "/api/v1/venues/"))
                 .route(RequestPredicates.GET("/api/v1/venues/all"),
-                        HandlerFunctions.http("http://localhost:8080/api/v1/venues/all"))
+                        HandlerFunctions.http(eventServiceUrl + "/api/v1/venues/all"))
                 .route(RequestPredicates.POST("/api/v1/venues/create"),
-                        HandlerFunctions.http("http://localhost:8080/api/v1/venues/create"))
+                        HandlerFunctions.http(eventServiceUrl + "/api/v1/venues/create"))
                 .route(RequestPredicates.PUT("/api/v1/venues/update/{venueId}"),
-                        request -> forwardWithPathVariable(request, "venueId", "http://localhost:8080/api/v1/venues/update/"))
+                        request -> forwardWithPathVariable(request, "venueId", eventServiceUrl + "/api/v1/venues/update/"))
                 .route(RequestPredicates.DELETE("/api/v1/venues/delete/{venueId}"),
-                        request -> forwardWithPathVariable(request, "venueId", "http://localhost:8080/api/v1/venues/delete/"))
+                        request -> forwardWithPathVariable(request, "venueId", eventServiceUrl + "/api/v1/venues/delete/"))
                 .filter(CustomHeaderFilter.addCustomHeaders())
                 .build();
     }

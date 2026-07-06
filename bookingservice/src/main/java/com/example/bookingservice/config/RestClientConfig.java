@@ -1,4 +1,4 @@
-package com.example.paymentservice.config;
+package com.example.bookingservice.config;
 
 import org.slf4j.MDC;
 import org.springframework.context.annotation.Bean;
@@ -7,7 +7,7 @@ import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.web.client.RestTemplate;
 
 @Configuration
-public class PaymentServiceConfig {
+public class RestClientConfig {
 
     @Bean
     public RestTemplate restTemplate() {

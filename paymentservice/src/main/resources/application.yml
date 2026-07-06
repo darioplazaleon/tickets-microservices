@@ -25,3 +25,7 @@ stripe:
 order:
   service:
     url: ${ORDER_SERVICE_URL:http://localhost:8082}
+
+logging:
+  pattern:
+    level: "%5p [cid:%X{correlationId:-}]"

@@ -33,7 +33,7 @@ public class OrderController {
 
     @GetMapping("/my-orders")
     public ResponseEntity<Page<OrderSimple>> getMyOrders(
-            @RequestHeader("X-User-ID") UUID customerId,
+            @RequestHeader("X-User-Id") UUID customerId,
             Pageable pageable) {
         var orders = orderService.getOrdersByCustomerId(customerId, pageable);
         return ResponseEntity.ok(orders);
@@ -42,7 +42,7 @@ public class OrderController {
     @GetMapping("/my-orders/{orderId}")
     public ResponseEntity<OrderDTO> getMyOrder(
             @PathVariable UUID orderId,
-            @RequestHeader("X-User-ID") UUID customerId) {
+            @RequestHeader("X-User-Id") UUID customerId) {
         var order = orderService.getCustomerOrderById(orderId, customerId);
         return ResponseEntity.ok(order);
     }

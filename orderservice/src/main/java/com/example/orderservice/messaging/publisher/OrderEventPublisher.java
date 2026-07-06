@@ -27,8 +27,8 @@ public class OrderEventPublisher {
         OrderExpiredEvent event = createOrderExpiredEvent(order);
 
         ProducerRecord<String, OrderExpiredEvent> producerRecord = new ProducerRecord<>(TOPIC, event);
-        producerRecord.headers().add("userId", userId.toString().getBytes(StandardCharsets.UTF_8));
-        producerRecord.headers().add("correlationId", correlationId.toString().getBytes(StandardCharsets.UTF_8));
+        producerRecord.headers().add("user-id", userId.toString().getBytes(StandardCharsets.UTF_8));
+        producerRecord.headers().add("correlation-id", correlationId.toString().getBytes(StandardCharsets.UTF_8));
 
         orderKafkaTemplate.send(producerRecord);
     }

@@ -41,3 +41,7 @@ services:
     url: ${BOOKING_SERVICE_URL:http://localhost:8081}
   ticket-service:
     url: ${TICKET_SERVICE_URL:http://localhost:8086}
+
+logging:
+  pattern:
+    level: "%5p [cid:%X{correlationId:-}]"

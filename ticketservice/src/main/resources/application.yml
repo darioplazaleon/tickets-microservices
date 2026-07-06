@@ -41,3 +41,7 @@ qr:
   secret:
     # Clave HMAC-SHA256 en Base64 para firmar los QR (ver QrGenerator)
     key: ${QR_SECRET_KEY}
+
+logging:
+  pattern:
+    level: "%5p [cid:%X{correlationId:-}]"

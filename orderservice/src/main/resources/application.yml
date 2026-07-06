@@ -32,10 +32,11 @@ spring:
       properties:
         spring.json.trusted.packages: com.example.*
 
-  # Nota: RedisConfig de este servicio instancia LettuceConnectionFactory sin
-  # argumentos, por lo que hoy SIEMPRE se conecta a localhost:6379 e ignora
-  # estas properties. Se dejan declaradas para cuando se corrija esa config.
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+
+logging:
+  pattern:
+    level: "%5p [cid:%X{correlationId:-}]"

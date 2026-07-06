@@ -1,11 +1,18 @@
-# El gateway corre en 8090 porque las rutas (route/*.java) apuntan a
-# eventservice hardcodeado en localhost:8080.
 server:
   port: ${GATEWAY_PORT:8090}
 
 spring:
   application:
     name: apigateway
+
+# Base URLs de los servicios detrás del gateway (route/*.java las inyecta con @Value)
+services:
+  event-service:
+    url: ${EVENT_SERVICE_URL:http://localhost:8080}
+  booking-service:
+    url: ${BOOKING_SERVICE_URL:http://localhost:8081}
+  ticket-service:
+    url: ${TICKET_SERVICE_URL:http://localhost:8086}
 
 # URL del JWKS de Keycloak: SecurityConfig la usa directamente en
 # NimbusJwtDecoder.withJwkSetUri(...)

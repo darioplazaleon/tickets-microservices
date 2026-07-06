@@ -2,6 +2,7 @@ package com.example.eventservice.service;
 
 import com.example.eventservice.entity.Event;
 import com.example.eventservice.entity.TicketType;
+import com.example.eventservice.exception.InsufficientCapacityException;
 import com.example.eventservice.repository.TicketTypeRepository;
 import com.example.eventservice.request.ReserveTicketRequest;
 import com.example.eventservice.request.TicketTypeRequest;
@@ -11,6 +12,9 @@ import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -29,6 +33,12 @@ public class TicketTypeService {
         .build();
   }
 
+  // El retry envuelve la transacción: ante un choque de @Version se reintenta
+  // todo el read-check-write con datos frescos.
+  @Retryable(
+      retryFor = ObjectOptimisticLockingFailureException.class,
+      maxAttempts = 3,
+      backoff = @Backoff(delay = 50))
   @Transactional
   public ReserveTicketResponse reserveTickets(UUID eventId, ReserveTicketRequest request) {
     if (request.quantity() <= 0) {
@@ -43,7 +53,7 @@ public class TicketTypeService {
     int available = type.getCapacity() - type.getReserved() - type.getSold();
 
     if (available < request.quantity()) {
-      throw new IllegalArgumentException("Not enough tickets available");
+      throw new InsufficientCapacityException("Not enough tickets available");
     }
 
     type.setReserved(type.getReserved() + request.quantity());

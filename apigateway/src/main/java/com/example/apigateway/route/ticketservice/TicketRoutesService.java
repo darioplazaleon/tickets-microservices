@@ -1,6 +1,7 @@
 package com.example.apigateway.route.ticketservice;
 
 import com.example.apigateway.config.CustomHeaderFilter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.server.mvc.filter.CircuitBreakerFilterFunctions;
 import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions;
 import org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions;
@@ -14,13 +15,16 @@ import java.net.URI;
 @Configuration
 public class TicketRoutesService {
 
+    @Value("${services.ticket-service.url}")
+    private String ticketServiceUrl;
+
     @Bean
     public RouterFunction<ServerResponse> ticketRoutes() {
         return GatewayRouterFunctions.route("ticket-service")
                 .route(RequestPredicates.POST("/api/v1/tickets/validate"),
-                        HandlerFunctions.http("http://localhost:8086/api/v1/tickets/validate"))
+                        HandlerFunctions.http(ticketServiceUrl + "/api/v1/tickets/validate"))
                 .route(RequestPredicates.POST("/api/v1/tickets/transfer/{ticketId}"),
-                        request -> forwardWithPathVariable(request, "ticketId", "http://localhost:8086/api/v1/tickets/transfer/"))
+                        request -> forwardWithPathVariable(request, "ticketId", ticketServiceUrl + "/api/v1/tickets/transfer/"))
                 .filter(CustomHeaderFilter.addCustomHeaders())
                 .filter(CircuitBreakerFilterFunctions.circuitBreaker("ticketServiceCircuitBreaker", URI.create("forward:/fallbackRoute")))
                 .build();

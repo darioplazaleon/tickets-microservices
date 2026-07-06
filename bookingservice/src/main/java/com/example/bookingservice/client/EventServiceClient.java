@@ -1,8 +1,8 @@
 package com.example.bookingservice.client;
 
 import com.example.bookingservice.request.ReserveTicketRequest;
-import com.example.bookingservice.response.EventResponse;
 import com.example.bookingservice.response.ReserveTicketResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -12,14 +12,16 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class EventServiceClient {
 
-    @Value("${ticket.service.url}")
-    private String ticketUri;
+    @Value("${event.service.url}")
+    private String eventServiceUrl;
+
+    private final RestTemplate restTemplate;
 
     public BigDecimal reserveTicket(UUID eventId, String ticketType, int quantity) {
-        RestTemplate restTemplate = new RestTemplate();
-        String url = ticketUri + "/reserve/" + eventId;
+        String url = eventServiceUrl + "/api/v1/ticket-types/reserve/" + eventId;
 
         ReserveTicketRequest reserveTicketRequest = new ReserveTicketRequest(ticketType, quantity);
 

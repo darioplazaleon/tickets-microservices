@@ -35,7 +35,7 @@ public class EventController {
     @PostMapping("/create")
     public ResponseEntity<EventRecord> createEvent(
             @RequestBody EventRequest newEvent,
-            @RequestHeader("X-User-ID") UUID createdByUserId) {
+            @RequestHeader("X-User-Id") UUID createdByUserId) {
         return ResponseEntity.status(HttpStatus.CREATED).body(eventService.createEvent(newEvent, createdByUserId));
     }
 

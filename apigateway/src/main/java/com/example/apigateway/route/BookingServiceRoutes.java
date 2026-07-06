@@ -2,6 +2,7 @@ package com.example.apigateway.route;
 
 import com.example.apigateway.config.CustomHeaderFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.server.mvc.filter.CircuitBreakerFilterFunctions;
 import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions;
 import org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions;
@@ -22,13 +23,16 @@ import static org.springframework.cloud.gateway.server.mvc.filter.FilterFunction
 @Configuration
 public class BookingServiceRoutes {
 
+    @Value("${services.booking-service.url}")
+    private String bookingServiceUrl;
+
     @Bean
     public RouterFunction<ServerResponse> bookingRoutes() {
         return GatewayRouterFunctions.route("booking-service")
                 .route(RequestPredicates.POST("/api/v1/bookings/create"),
-                        HandlerFunctions.http("http://localhost:8081/api/v1/bookings/create"))
+                        HandlerFunctions.http(bookingServiceUrl + "/api/v1/bookings/create"))
                 .route(RequestPredicates.POST("/api/v1/customers/register"),
-                        HandlerFunctions.http("http://localhost:8081/api/v1/customers/register"))
+                        HandlerFunctions.http(bookingServiceUrl + "/api/v1/customers/register"))
                 .filter(CustomHeaderFilter.addCustomHeaders())
                 .filter(CircuitBreakerFilterFunctions.circuitBreaker("bookingServiceCircuitBreaker", URI.create("forward:/fallbackRoute")))
                 .build();
