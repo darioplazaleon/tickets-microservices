@@ -1,5 +1,6 @@
 package com.example.orderservice.messaging.listener;
 
+import com.example.shared.messaging.Topics;
 import com.example.orderservice.service.OrderPaymentService;
 import com.example.shared.events.PaymentSucceededEvent;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,7 @@ public class OrderPaymentListener {
 
     private final OrderPaymentService orderPaymentService;
 
-    @KafkaListener(topics = "tickets.payment.success", groupId = "order-service")
+    @KafkaListener(topics = Topics.PAYMENT_SUCCESS, groupId = "order-service")
     public void handlePaymentSucceeded(PaymentSucceededEvent event) {
         log.info("[OrderService] PaymentSucceededEvent received for orderId: {} (correlationId={})", event.orderId(), event.correlationId());
         orderPaymentService.processPaymentSucceeded(event);

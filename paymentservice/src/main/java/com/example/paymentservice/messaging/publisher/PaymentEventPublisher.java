@@ -2,6 +2,8 @@ package com.example.paymentservice.messaging.publisher;
 
 import com.example.paymentservice.response.OrderResponse;
 import com.example.shared.events.PaymentSucceededEvent;
+import com.example.shared.messaging.Topics;
+import com.example.shared.messaging.Tracing;
 import com.example.shared.records.TicketInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +15,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 
+/**
+ * Publica directo a Kafka: paymentservice no tiene base de datos propia, así
+ * que no puede usar el outbox transaccional de shared-infra.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -37,10 +43,12 @@ public class PaymentEventPublisher {
         );
 
         ProducerRecord<String, PaymentSucceededEvent> record = new ProducerRecord<>(
-                "tickets.payment.success", event
+                Topics.PAYMENT_SUCCESS, order.orderId().toString(), event
         );
-        record.headers().add("user-id", order.customerId().toString().getBytes(StandardCharsets.UTF_8));
-        record.headers().add("correlation-id", event.correlationId().toString().getBytes(StandardCharsets.UTF_8));
+        record.headers().add(Tracing.USER_ID_KAFKA_HEADER,
+                order.customerId().toString().getBytes(StandardCharsets.UTF_8));
+        record.headers().add(Tracing.CORRELATION_ID_KAFKA_HEADER,
+                event.correlationId().toString().getBytes(StandardCharsets.UTF_8));
 
         kafkaTemplate.send(record);
         log.info("📤 PaymentSucceededEvent emitido: {}", event.orderId());

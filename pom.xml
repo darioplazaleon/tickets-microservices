@@ -18,6 +18,7 @@
 
     <modules>
         <module>shared-events</module>
+        <module>shared-infra</module>
         <module>apigateway</module>
         <module>bookingservice</module>
         <module>eventservice</module>

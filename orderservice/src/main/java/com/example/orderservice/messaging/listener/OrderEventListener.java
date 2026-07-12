@@ -1,5 +1,6 @@
 package com.example.orderservice.messaging.listener;
 
+import com.example.shared.messaging.Topics;
 import com.example.orderservice.service.OrderService;
 import com.example.shared.events.BookingCreatedEvent;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ public class OrderEventListener {
     private final StringRedisTemplate redis;
     private final OrderService orderService;
 
-    @KafkaListener(topics = "tickets.booking.created", groupId = "order-service")
+    @KafkaListener(topics = Topics.BOOKING_CREATED, groupId = "order-service")
     public void handleBookingCreatedEvent(BookingCreatedEvent event) {
         log.info("[OrderService] BookingCreatedEvent received for bookingId: {} (correlationId={})", event.bookingId(), event.correlationId());
         orderService.createOrder(event);

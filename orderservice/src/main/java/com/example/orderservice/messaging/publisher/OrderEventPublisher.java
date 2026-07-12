@@ -1,8 +1,9 @@
 package com.example.orderservice.messaging.publisher;
 
 import com.example.orderservice.entity.Order;
-import com.example.orderservice.messaging.outbox.OutboxEventWriter;
 import com.example.shared.events.OrderExpiredEvent;
+import com.example.shared.infra.outbox.OutboxEventWriter;
+import com.example.shared.messaging.Topics;
 import com.example.shared.records.TicketInfoSimple;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +20,7 @@ public class OrderEventPublisher {
 
     private final OutboxEventWriter outboxEventWriter;
 
-    private static final String TOPIC = "tickets.order.expired";
+    private static final String TOPIC = Topics.ORDER_EXPIRED;
 
     public void sendOrderExpiredEvent(Order order, UUID userId, UUID correlationId) {
         OrderExpiredEvent event = createOrderExpiredEvent(order);

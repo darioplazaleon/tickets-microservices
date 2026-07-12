@@ -1,5 +1,6 @@
 package com.example.eventservice.messaging.listener;
 
+import com.example.shared.messaging.Topics;
 import com.example.eventservice.service.events.EventExpirationService;
 import com.example.shared.events.OrderExpiredEvent;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,7 @@ public class OrderExpiredEventListener {
 
   private final EventExpirationService eventExpirationService;
 
-  @KafkaListener(topics = "tickets.order.expired", groupId = "event-service")
+  @KafkaListener(topics = Topics.ORDER_EXPIRED, groupId = "event-service")
   public void handleOrderExpired(OrderExpiredEvent event) {
     log.info(
         "[EventService] OrderExpiredEvent received: orderId={}, bookingId={}, correlationId={}",

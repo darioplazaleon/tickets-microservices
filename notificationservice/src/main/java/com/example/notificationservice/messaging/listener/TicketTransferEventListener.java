@@ -1,5 +1,6 @@
 package com.example.notificationservice.messaging.listener;
 
+import com.example.shared.messaging.Topics;
 import com.example.notificationservice.service.EmailService;
 import com.example.notificationservice.service.NotificationService;
 import com.example.shared.events.TicketQrReadyEvent;
@@ -15,7 +16,7 @@ public class TicketTransferEventListener {
 
     private final NotificationService notificationService;
 
-    @KafkaListener(topics = "tickets.qr.transfer", groupId = "notification-service")
+    @KafkaListener(topics = Topics.QR_TRANSFER, groupId = "notification-service")
     public void handleTicketTransfer(TicketQrReadyEvent event) {
         log.info("[Notification Service] Received ticket transfer event for orderId: {}", event.orderId());
         notificationService.processTransferTicket(event);

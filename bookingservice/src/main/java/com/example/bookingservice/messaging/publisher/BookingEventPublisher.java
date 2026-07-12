@@ -2,16 +2,13 @@ package com.example.bookingservice.messaging.publisher;
 
 import com.example.bookingservice.entity.Booking;
 import com.example.shared.events.BookingCreatedEvent;
+import com.example.shared.infra.outbox.OutboxEventWriter;
+import com.example.shared.messaging.Topics;
 import com.example.shared.records.TicketInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.stereotype.Component;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,7 +17,7 @@ import java.util.UUID;
 @Slf4j
 public class BookingEventPublisher {
 
-    private final KafkaTemplate<String, BookingCreatedEvent> kafkaTemplate;
+    private final OutboxEventWriter outboxEventWriter;
 
     public void sendBookingCreatedEvent(Booking booking, UUID correlationId, UUID userId) {
         List<TicketInfo> tickets = booking.getTickets().stream()
@@ -37,11 +34,8 @@ public class BookingEventPublisher {
                 booking.getCreatedAt()
         );
 
-        ProducerRecord<String, BookingCreatedEvent> record = new ProducerRecord<>("tickets.booking.created", event);
-        record.headers().add("user-id", userId.toString().getBytes(StandardCharsets.UTF_8));
-        record.headers().add("correlation-id", correlationId.toString().getBytes(StandardCharsets.UTF_8));
-
-        kafkaTemplate.send(record);
-        log.info("BookingCreatedEvent sent to Kafka topic: {}", event.bookingId());
+        outboxEventWriter.append(Topics.BOOKING_CREATED, booking.getId().toString(), event,
+                correlationId != null ? correlationId.toString() : null);
+        log.info("BookingCreatedEvent appended to outbox: {}", event.bookingId());
     }
 }

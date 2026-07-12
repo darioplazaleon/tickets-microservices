@@ -1,5 +1,6 @@
 package com.example.notificationservice.messaging.listener;
 
+import com.example.shared.messaging.Topics;
 import com.example.notificationservice.service.NotificationService;
 import com.example.shared.events.TicketMasterQrEvent;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,7 @@ public class NotificationEventListener {
 
     private final NotificationService notificationService;
 
-    @KafkaListener(topics = "tickets.qr.ready", groupId = "notification-service")
+    @KafkaListener(topics = Topics.QR_READY, groupId = "notification-service")
     private void handleTicketMasterQrReady (TicketMasterQrEvent event) {
         log.info("[Notification Service] Received payment succeeded event for orderId: {}", event.orderId());
         notificationService.processPaymentSuccess(event);

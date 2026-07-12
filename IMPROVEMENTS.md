@@ -37,7 +37,8 @@ Los publishers llaman `kafkaTemplate.send()` directamente después de escribir e
 - [x] Implementar patrón **Transactional Outbox**: tabla `outbox_events` + `OutboxEventWriter` (escribe en la TX de negocio) en ticketservice y orderservice
 - [x] Publicador: `OutboxRelay` (@Scheduled cada 2s) lee pendientes en orden, publica con el tipo original (header `__TypeId__` intacto) y marca `published_at`; ante error corta el batch y reintenta
 - [x] ticketservice (`tickets.qr.ready`, `tickets.qr.transfer`) y orderservice (`tickets.order.expired`)
-- [ ] Pendiente: bookingservice (`tickets.booking.created`) y paymentservice (`tickets.payment.success`) — conviene hacerlo después de extraer el outbox a un módulo compartido (punto 6)
+- [x] bookingservice (`tickets.booking.created`): outbox vía shared-infra, `createBooking` transaccional, migración V2
+- [x] paymentservice: N/A — no tiene base de datos propia; sigue publicando directo (documentado en el publisher)
 
 > Bug encontrado y corregido de paso: `OrderExpirationScheduler` guardaba `bookingId` en el ZSet de Redis pero lo buscaba como `orderId` (`findById`) — las órdenes nunca expiraban por esa vía. Ahora busca por `bookingId` y la expiración corre en transacción (`OrderExpireService.expireByBookingId`), removiendo del ZSet recién después de procesar.
 
@@ -67,15 +68,19 @@ No hay `DefaultErrorHandler`, `@RetryableTopic` ni dead-letter topics. Un mensaj
 
 `RequestTracingFilter` y `KafkaTracingInterceptor` están copiados idénticos en 5–6 servicios. `GlobalExceptionHandler` solo existe en eventservice — los demás devuelven stack traces crudos. Los nombres de topics (`"tickets.payment.success"`, etc.) están hardcodeados como strings en cada servicio.
 
-- [ ] Crear módulo `shared-web` (junto a `shared-events` en el POM padre) con `RequestTracingFilter` y `KafkaTracingInterceptor`
-- [ ] Mover/replicar `GlobalExceptionHandler` a todos los servicios vía el módulo compartido
-- [ ] Constantes compartidas para nombres de topics y headers
+- [x] Módulo **`shared-infra`** con auto-configuraciones Spring Boot (se activan por classpath, sin código por servicio):
+  - `SharedWebAutoConfiguration`: `RequestTracingFilter` + `GlobalExceptionHandler` genérico (solo apps servlet)
+  - `SharedKafkaAutoConfiguration`: `KafkaTracingInterceptor` + `DefaultErrorHandler` con DLT (Boot los aplica solo al container factory)
+  - `SharedOutboxAutoConfiguration`: `OutboxEventWriter`/`OutboxRelay` reescritos con **JDBC plano** (sin acoplar JPA), opt-in por servicio con `shared.outbox.enabled=true`
+- [x] `GlobalExceptionHandler` genérico en todos los servicios servlet; eventservice conserva `EventExceptionHandler` solo para sus excepciones de dominio
+- [x] Constantes `Topics` y `Tracing` en shared-events; reemplazados los strings hardcodeados en los 9 listeners y todos los publishers
+- [x] Eliminadas ~20 clases duplicadas entre servicios
 
 ## 7. Propagación inconsistente del correlation-id 🟡
 
 `TicketEventPublisher` lee el correlation-id del MDC; `OrderEventPublisher` lo recibe como parámetro `UUID`. La traza puede cortarse en algún salto.
 
-- [ ] Unificar: todos los publishers leen del MDC (no ensucia las firmas de los métodos)
+- [x] Unificado vía `OutboxEventWriter`: por defecto lee el MDC; acepta correlation-id explícito solo donde no hay contexto de request (scheduler de expiración, que lo toma de la orden persistida)
 
 ## 8. Seguridad solo en el gateway 🟡
 

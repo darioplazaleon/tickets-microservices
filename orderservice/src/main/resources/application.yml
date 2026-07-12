@@ -40,6 +40,11 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
+# Activa OutboxEventWriter/OutboxRelay de shared-infra (requiere tabla outbox_events)
+shared:
+  outbox:
+    enabled: true
+
 logging:
   pattern:
     level: "%5p [cid:%X{correlationId:-}]"

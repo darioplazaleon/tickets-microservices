@@ -40,6 +40,11 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
+# Activa OutboxEventWriter/OutboxRelay de shared-infra (requiere tabla outbox_events)
+shared:
+  outbox:
+    enabled: true
+
 # Base URL de eventservice (EventServiceClient le agrega el path del endpoint)
 event:
   service:

@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.*;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,9 @@ public class BookingService {
   private final BookingEventPublisher bookingEventPublisher;
   private final TicketHoldService ticketService;
 
+  // Transaccional para que el save del booking y el evento en el outbox
+  // commiteen juntos (el publisher escribe en outbox_events, no en Kafka).
+  @Transactional
   public BookingResponse createBooking(UUID userId, UUID correlationId, BookingRequest request) {
 
     if (request.tickets().isEmpty()) {

@@ -1,5 +1,6 @@
 package com.example.bookingservice.messaging.listener;
 
+import com.example.shared.messaging.Topics;
 import com.example.bookingservice.entity.BookingStatus;
 import com.example.bookingservice.repository.BookingRepository;
 import com.example.bookingservice.service.TicketHoldService;
@@ -16,7 +17,7 @@ public class BookingExpiredEventListener {
 
     private final BookingRepository bookingRepository;
 
-    @KafkaListener(topics = "tickets.order.expired", groupId = "booking-service")
+    @KafkaListener(topics = Topics.ORDER_EXPIRED, groupId = "booking-service")
     public void handleOrderExpired(OrderExpiredEvent event) {
         log.info("[BookingService] OrderExpiredEvent received for bookingId: {} (correlationId={})", event.bookingId(), event.correlationId());
 

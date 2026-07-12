@@ -1,0 +1,3 @@
+com.example.shared.infra.autoconfigure.SharedWebAutoConfiguration
+com.example.shared.infra.autoconfigure.SharedKafkaAutoConfiguration
+com.example.shared.infra.autoconfigure.SharedOutboxAutoConfiguration

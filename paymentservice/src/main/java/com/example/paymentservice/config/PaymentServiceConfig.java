@@ -1,5 +1,6 @@
 package com.example.paymentservice.config;
 
+import com.example.shared.messaging.Tracing;
 import org.slf4j.MDC;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,13 +19,13 @@ public class PaymentServiceConfig {
 
     private ClientHttpRequestInterceptor tracingHeadersInterceptor() {
         return (request, body, execution) -> {
-            String correlationId = MDC.get(RequestTracingFilter.CORRELATION_ID_MDC_KEY);
+            String correlationId = MDC.get(Tracing.CORRELATION_ID_MDC_KEY);
             if (correlationId != null) {
-                request.getHeaders().set(RequestTracingFilter.CORRELATION_ID_HEADER, correlationId);
+                request.getHeaders().set(Tracing.CORRELATION_ID_HEADER, correlationId);
             }
-            String userId = MDC.get(RequestTracingFilter.USER_ID_MDC_KEY);
+            String userId = MDC.get(Tracing.USER_ID_MDC_KEY);
             if (userId != null) {
-                request.getHeaders().set(RequestTracingFilter.USER_ID_HEADER, userId);
+                request.getHeaders().set(Tracing.USER_ID_HEADER, userId);
             }
             return execution.execute(request, body);
         };
