@@ -1,0 +1,21 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # Los microservicios corren en el host, no en Docker: se los alcanza vía
+  # host.docker.internal (mapeado a host-gateway en el compose).
+  - job_name: services
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - host.docker.internal:8080 # eventservice
+          - host.docker.internal:8081 # bookingservice
+          - host.docker.internal:8082 # orderservice
+          - host.docker.internal:8085 # notificationservice
+          - host.docker.internal:8086 # ticketservice
+          - host.docker.internal:8087 # paymentservice
+          - host.docker.internal:8090 # apigateway

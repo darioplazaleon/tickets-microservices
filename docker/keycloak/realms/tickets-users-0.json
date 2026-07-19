@@ -1,0 +1,54 @@
+{
+  "realm" : "tickets",
+  "users" : [ {
+    "id" : "79d99420-6a7c-47e9-82ca-358773824a3f",
+    "username" : "testadmin",
+    "firstName" : "Test",
+    "lastName" : "Admin",
+    "email" : "testadmin@example.com",
+    "emailVerified" : true,
+    "createdTimestamp" : 1784485171289,
+    "enabled" : true,
+    "totp" : false,
+    "credentials" : [ {
+      "id" : "29be80e3-c41a-4b8c-ab73-b35b4e06b97d",
+      "type" : "password",
+      "createdDate" : 1784485173064,
+      "secretData" : "{\"value\":\"SwSZLVcDs4+VKt8K5kB3yU8Np4ArBfT3XNXo5wfN7+ipy83M7Fk72KvOiGxOlX9xeqbdnJ8IgSf0iD47/wYAoA==\",\"salt\":\"yGJxJ/qfeoECfwpTUTgHGA==\",\"additionalParameters\":{}}",
+      "credentialData" : "{\"hashIterations\":210000,\"algorithm\":\"pbkdf2-sha512\",\"additionalParameters\":{}}"
+    } ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-tickets" ],
+    "clientRoles" : {
+      "tickets-api" : [ "user_client_role", "admin_client_role" ]
+    },
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "40e456d6-9490-490f-9fd8-c4ac32f068c6",
+    "username" : "testuser",
+    "firstName" : "Test",
+    "lastName" : "User",
+    "email" : "testuser@example.com",
+    "emailVerified" : true,
+    "createdTimestamp" : 1784485174508,
+    "enabled" : true,
+    "totp" : false,
+    "credentials" : [ {
+      "id" : "efe4d596-9980-48bc-947b-58ee912b4f51",
+      "type" : "password",
+      "createdDate" : 1784485176345,
+      "secretData" : "{\"value\":\"rXvBlDf1isHXSparwroql2AcTASrqJgid3qYsV1w+CeljFjxRweffGskIvS/qaTVtowGSV/NbLzm0n956s4uXg==\",\"salt\":\"VFZ5aMP8ZBuNg2kS6kqhyQ==\",\"additionalParameters\":{}}",
+      "credentialData" : "{\"hashIterations\":210000,\"algorithm\":\"pbkdf2-sha512\",\"additionalParameters\":{}}"
+    } ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-tickets" ],
+    "clientRoles" : {
+      "tickets-api" : [ "user_client_role" ]
+    },
+    "notBefore" : 0,
+    "groups" : [ ]
+  } ]
+}
