@@ -2,8 +2,6 @@
 
 Distributed event-driven ticketing platform built with Spring Boot, Kafka & Keycloak.
 
-[▶️ Live API Docs](https://docs.plazaleon.tech)
-
 ## Tech Stack
 
 - **Java 21 / Spring Boot 3**
@@ -110,5 +108,3 @@ docker compose --profile app up -d --build
 
 All containers should display healthy logs in your terminal.  
 Open Swagger UI or hit endpoints with Postman / cURL to confirm.
-
-> ℹ️ Each microservice also publishes detailed OpenAPI specs on Bump.sh — see **Monorepo layout** for direct links.
