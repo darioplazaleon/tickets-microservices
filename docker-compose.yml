@@ -1,3 +1,21 @@
+# `docker compose up -d` levanta solo la infraestructura (para correr los
+# servicios desde el IDE). Con `docker compose --profile app up -d --build`
+# se levanta el stack completo, servicios incluidos.
+
+# Entorno común de los servicios cuando corren DENTRO de la red de compose:
+# los hosts dejan de ser localhost y pasan a ser los nombres de los contenedores.
+x-app-env: &app-env
+  DB_HOST: postgresql
+  DB_PORT: 5432
+  DB_NAME: ${POSTGRES_DB:-ticketing}
+  KAFKA_BOOTSTRAP_SERVERS: kafka-broker:29092
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  EVENT_SERVICE_URL: http://eventservice:8080
+  BOOKING_SERVICE_URL: http://bookingservice:8081
+  ORDER_SERVICE_URL: http://orderservice:8082
+  TICKET_SERVICE_URL: http://ticketservice:8086
+
 services:
   postgresql:
     image: postgres:16-alpine
@@ -47,6 +65,12 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: ${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}
       KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS}
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: ${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR}
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
 
   kafka-ui:
     container_name: kafka-ui
@@ -129,6 +153,133 @@ services:
       - prometheus
     networks:
       - monitoring
+
+  # ── Servicios de la aplicación (profile "app") ─────────────────────────────
+
+  eventservice:
+    profiles: [app]
+    build:
+      context: .
+      args: { MODULE: eventservice }
+    container_name: eventservice
+    environment:
+      <<: *app-env
+      EVENT_DB_PASSWORD: ${EVENT_DB_PASSWORD}
+    ports:
+      - "${EVENT_SERVICE_PORT:-8080}:8080"
+    depends_on:
+      postgresql: { condition: service_healthy }
+      kafka-broker: { condition: service_healthy }
+      redis: { condition: service_started }
+
+  bookingservice:
+    profiles: [app]
+    build:
+      context: .
+      args: { MODULE: bookingservice }
+    container_name: bookingservice
+    environment:
+      <<: *app-env
+      BOOKING_DB_PASSWORD: ${BOOKING_DB_PASSWORD}
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-tickets}
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KEYCLOAK_ADMIN_CLIENT_ID: ${KEYCLOAK_ADMIN_CLIENT_ID:-admin-cli}
+      KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET:-}
+    ports:
+      - "${BOOKING_SERVICE_PORT:-8081}:8081"
+    depends_on:
+      postgresql: { condition: service_healthy }
+      kafka-broker: { condition: service_healthy }
+      redis: { condition: service_started }
+      keycloak: { condition: service_started }
+      eventservice: { condition: service_started }
+
+  orderservice:
+    profiles: [app]
+    build:
+      context: .
+      args: { MODULE: orderservice }
+    container_name: orderservice
+    environment:
+      <<: *app-env
+      ORDER_DB_PASSWORD: ${ORDER_DB_PASSWORD}
+    ports:
+      - "${ORDER_SERVICE_PORT:-8082}:8082"
+    depends_on:
+      postgresql: { condition: service_healthy }
+      kafka-broker: { condition: service_healthy }
+      redis: { condition: service_started }
+
+  paymentservice:
+    profiles: [app]
+    build:
+      context: .
+      args: { MODULE: paymentservice }
+    container_name: paymentservice
+    environment:
+      <<: *app-env
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+    ports:
+      - "${PAYMENT_SERVICE_PORT:-8087}:8087"
+    depends_on:
+      kafka-broker: { condition: service_healthy }
+
+  ticketservice:
+    profiles: [app]
+    build:
+      context: .
+      args: { MODULE: ticketservice }
+    container_name: ticketservice
+    environment:
+      <<: *app-env
+      TICKET_DB_PASSWORD: ${TICKET_DB_PASSWORD}
+      QR_SECRET_KEY: ${QR_SECRET_KEY}
+    ports:
+      - "${TICKET_SERVICE_PORT:-8086}:8086"
+    depends_on:
+      postgresql: { condition: service_healthy }
+      kafka-broker: { condition: service_healthy }
+      redis: { condition: service_started }
+
+  notificationservice:
+    profiles: [app]
+    build:
+      context: .
+      args: { MODULE: notificationservice }
+    container_name: notificationservice
+    environment:
+      <<: *app-env
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+    ports:
+      - "${NOTIFICATION_SERVICE_PORT:-8085}:8085"
+    depends_on:
+      kafka-broker: { condition: service_healthy }
+      redis: { condition: service_started }
+
+  apigateway:
+    profiles: [app]
+    build:
+      context: .
+      args: { MODULE: apigateway }
+    container_name: apigateway
+    environment:
+      <<: *app-env
+      KEYCLOAK_JWKS_URI: http://keycloak:8080/realms/${KEYCLOAK_REALM:-tickets}/protocol/openid-connect/certs
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-tickets-api}
+      JWT_PRINCIPAL_ATTRIBUTE: ${JWT_PRINCIPAL_ATTRIBUTE:-preferred_username}
+    ports:
+      - "${GATEWAY_PORT:-8090}:8090"
+    depends_on:
+      keycloak: { condition: service_started }
+      eventservice: { condition: service_started }
+      bookingservice: { condition: service_started }
+      ticketservice: { condition: service_started }
 
 volumes:
   db-data:

@@ -21,7 +21,7 @@
     "requiredActions" : [ ],
     "realmRoles" : [ "default-roles-tickets" ],
     "clientRoles" : {
-      "tickets-api" : [ "user_client_role", "admin_client_role" ]
+      "tickets-api" : [ "admin_client_role" ]
     },
     "notBefore" : 0,
     "groups" : [ ]
@@ -45,9 +45,6 @@
     "disableableCredentialTypes" : [ ],
     "requiredActions" : [ ],
     "realmRoles" : [ "default-roles-tickets" ],
-    "clientRoles" : {
-      "tickets-api" : [ "user_client_role" ]
-    },
     "notBefore" : 0,
     "groups" : [ ]
   } ]

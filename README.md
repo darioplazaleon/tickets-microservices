@@ -13,6 +13,38 @@ Distributed event-driven ticketing platform built with Spring Boot, Kafka & Keyc
 - Keycloak (JWT auth)
 - Docker & Docker Compose
 
+## 🏗 Architecture
+
+```mermaid
+flowchart LR
+    CL([Client]) --> GW["API Gateway :8090"]
+    KC[Keycloak] -. "JWT" .- GW
+    CL -- "checkout" --> PAY
+
+    GW --> EV
+    GW --> BK
+    GW --> TK
+
+    BK[booking-service] -- "REST: reserve capacity" --> EV[event-service]
+    BK == "booking.created" ==> OR[order-service]
+    PAY[payment-service] -- "REST: get order" --> OR
+    PAY == "payment.success" ==> OR
+    PAY == "payment.success" ==> BK
+    PAY == "payment.success" ==> EV
+    PAY == "payment.success" ==> TK[ticket-service]
+    OR == "order.expired" ==> BK
+    OR == "order.expired" ==> EV
+    TK == "qr.ready / qr.transfer" ==> NT[notification-service]
+    NT -- "REST: enrich email data" --> EV
+
+    ST([Stripe]) -. "webhook" .-> PAY
+    NT -- "SMTP" --> MAIL([Email + QR])
+```
+
+> **Thick arrows** are Kafka topics (`tickets.*`), published through a **transactional outbox** wherever the producer owns a database; thin arrows are synchronous REST, dotted arrows are external integrations. Every consumer is **idempotent** and every topic has a **dead-letter topic** with exponential backoff. Each service owns its own schema in a single PostgreSQL instance; Redis backs caching and the order-expiry schedule.
+>
+> See **[docs/architecture.md](./docs/architecture.md)** for the full purchase sequence diagram and the order lifecycle.
+
 ## Monorepo layout
 
 | Folder                     | Responsibility                                                                                                                                                                                                                 | Key interactions                                              | Docs                                          |
@@ -45,7 +77,7 @@ Install the following tools before you run or contribute to **tickets-microservi
 ### 1 ▸ Clone the repository
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/tickets-microservice.git
+git clone https://github.com/darioplazaleon/tickets-microservice.git
 cd tickets-microservice
 ```
 
@@ -60,16 +92,19 @@ cp .env.example .env
 ### 3 ▸ Build & start the full stack
 
 ```bash
-docker compose up --build
+docker compose --profile app up -d --build
 ```
 
-| Service                    | URL / Port                              |
-|----------------------------|-----------------------------------------|
-| **API Gateway Swagger UI** | <http://localhost:8080/swagger-ui.html> |
-| **Keycloak Admin Console** | <http://localhost:8180/admin>           |
-| **PostgreSQL**             | `localhost:5432`                        |
-| **Kafka UI** (optional)    | <http://localhost:9093>                 |
-| **Prometheus**             | <http://localhost:9090>                 |
+> To start **only the infrastructure** (and run the services from your IDE), drop the profile: `docker compose up -d`
+
+| Service                    | URL / Port                        |
+|----------------------------|-----------------------------------|
+| **API Gateway**            | <http://localhost:8090>           |
+| **Keycloak Admin Console** | <http://localhost:8091/admin>     |
+| **PostgreSQL**             | `localhost:5432` (`POSTGRES_PORT`)|
+| **Kafka UI**               | <http://localhost:8084>           |
+| **Prometheus**             | <http://localhost:9090>           |
+| **Grafana**                | <http://localhost:3000>           |
 
 ### 4 ▸ Verify everything is running
 
@@ -77,19 +112,3 @@ All containers should display healthy logs in your terminal.
 Open Swagger UI or hit endpoints with Postman / cURL to confirm.
 
 > ℹ️ Each microservice also publishes detailed OpenAPI specs on Bump.sh — see **Monorepo layout** for direct links.
-
-## 🗺️ Roadmap
-
-> **Legend**  
-> ✅ = Done · 🛠 = In progress · ⏳ = Planned · 💤 = Backlog
-
-| Milestone                              | Target date | Features / Tasks                                                                                                                                           | Status |
-|----------------------------------------|-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|
-| **v1.0 – MVP**                         | Q2 2025     | - Soft-hold bookings<br>- Stripe Checkout integration<br>- QR per ticket & master QR<br>- End-to-end tracing (`X-Correlation-Id`)                          | ✅      |
-| **v1.2 – i18n**                        | Q3 2025     | - Email templates i18n (EN/ES/FR)                                                                                                                          | ⏳      |
-| **v1.3 – Production-ready K8s Deploy** | Q3 2025     | - Helm charts for all services<br>- Readiness & liveness probes<br>- Secrets via Kubernetes Secrets<br>- Kafka operator & DB auto-provisioning             | 🛠     |
-| **v1.5 – Mobile App (Attendee)**       | Q1 2026     | - React Native / Kotlin Multiplatform app<br>- Keycloak OIDC login + QR scan offline<br>- Push notifications<br>- Apple Wallet / Google Wallet integration | ⏳      |
-
-## 📎 License
-
-This project is licensed under the [Apache License 2.0](./LICENSE) © 2025 Dario Alessandro Plaza Leon.

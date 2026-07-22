@@ -9,15 +9,12 @@ import com.example.bookingservice.util.KeycloakProvider;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
-import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -75,35 +72,8 @@ public class CustomerService {
                 customerRepository.save(customer);
                 log.info("Customer saved to local DB with ID: {}", userId);
 
-                RealmResource realmResource = keycloakProvider.getRealmResource();
-                List<RoleRepresentation> rolesToAssign;
-
-                if (userRequest.roles() == null || userRequest.roles().isEmpty()) {
-                    RoleRepresentation defaultRole = realmResource.roles().get("user").toRepresentation();
-                    if (defaultRole == null) {
-                        log.warn("Default role 'user' not found in Keycloak realm.");
-                        rolesToAssign = Collections.emptyList();
-                    } else {
-                        rolesToAssign = List.of(defaultRole);
-                    }
-                } else {
-                    rolesToAssign = realmResource.roles()
-                            .list()
-                            .stream()
-                            .filter(role -> userRequest.roles()
-                                    .stream()
-                                    .anyMatch(roleName -> roleName.equalsIgnoreCase(role.getName())))
-                            .toList();
-                }
-
-                if (!rolesToAssign.isEmpty()) {
-                    realmResource.users().get(userId).roles().realmLevel().add(rolesToAssign);
-                    log.info("Assigned roles to user {}: {}", userId, rolesToAssign.stream().map(RoleRepresentation::getName).toList());
-                } else {
-                    log.info("No roles to assign or roles not found for user {}", userId);
-                }
-
-
+                // No se asignan roles: el gateway solo exige token válido para las rutas
+                // de usuario; los admins se gestionan a mano en Keycloak (admin_client_role).
                 return new CustomerResponse(customer);
 
             } else if (status == 409) { // Conflict

@@ -44,9 +44,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/events/create").hasRole("admin_client_role")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/events/update/{eventId}").hasRole("admin_client_role")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/events/delete/{eventId}").hasRole("admin_client_role")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/payment/checkout/{orderId}").hasRole("user_client_role")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/bookings/create").hasRole("user_client_role")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/tickets/validate").hasRole("user_client_role")
+                        // Checkout, bookings y validación de tickets solo requieren estar
+                        // autenticado: todo usuario del realm es un usuario registrado.
                         .requestMatchers(excludedUrls).permitAll()
                         .anyRequest().authenticated()
                 )
